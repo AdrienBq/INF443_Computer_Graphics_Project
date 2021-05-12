@@ -1,6 +1,8 @@
 #include "vcl/vcl.hpp"
 #include <iostream>
 
+#include "items/terrain.hpp"
+
 
 using namespace vcl;
 
@@ -37,6 +39,10 @@ void display_interface();
 void display_frame();
 
 timer_interval timer;
+
+mesh terrain;
+mesh_drawable terrain_visual;
+perlin_noise_parameters parameters;
 
 
 int main(int, char* argv[])
@@ -108,6 +114,10 @@ void initialize_data()
 	scene.camera.distance_to_center = 2.5f;
 	scene.camera.look_at({ -0.5f,2.5f,1 }, { 0,0,0 }, { 0,0,1 });
 
+    // Create the terrain
+    terrain = initialize_terrain();
+    terrain_visual = mesh_drawable(terrain);
+    update_terrain(terrain, terrain_visual, parameters);
 }
 
 
@@ -115,9 +125,20 @@ void initialize_data()
 void display_frame()
 {
 	// Update the current time
-	timer.update();
-	float const t = timer.t;
+    //timer.update();
+    //float const t = timer.t;
 
+    ImGui::Checkbox("Frame", &user.gui.display_frame);
+    ImGui::Checkbox("Wireframe", &user.gui.display_wireframe);
+
+    bool update = false;
+    update |= ImGui::SliderFloat("Persistance", &parameters.persistency, 0.1f, 0.6f);
+    update |= ImGui::SliderFloat("Frequency gain", &parameters.frequency_gain, 1.5f, 2.5f);
+    update |= ImGui::SliderInt("Octave", &parameters.octave, 1, 8);
+    update |= ImGui::SliderFloat("Height", &parameters.terrain_height, 0.1f, 1.5f);
+
+    if(update)// if any slider has been changed - then update the terrain
+        update_terrain(terrain, terrain_visual, parameters);
 }
 
 
