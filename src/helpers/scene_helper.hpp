@@ -18,6 +18,8 @@ struct picking_structure {
 
 struct gui_parameters {
 	bool display_frame = false;
+	bool display_surface = true;
+	bool display_wireframe = false;
 	bool display_polygon = true;
 	bool display_keyposition = true;
 	bool display_trajectory = true;

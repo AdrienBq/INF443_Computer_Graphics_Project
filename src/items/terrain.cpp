@@ -1,4 +1,3 @@
-
 #include "terrain.hpp"
 #include "../helpers/interpolation.hpp"
 

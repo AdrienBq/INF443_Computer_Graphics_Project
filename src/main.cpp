@@ -1,32 +1,14 @@
 #include "vcl/vcl.hpp"
 #include <iostream>
 
+#include "helpers/scene_helper.hpp"
 #include "items/terrain.hpp"
 
 
 using namespace vcl;
 
-struct scene_environment
-{
-	camera_around_center camera;
-	mat4 projection;
-	vec3 light;
-};
+
 scene_environment scene;
-
-struct gui_parameters {
-	bool display_frame = false;
-	bool display_surface = true;
-	bool display_wireframe = false;
-};
-
-struct user_interaction_parameters {
-	vec2 mouse_prev;
-	timer_fps fps_record;
-	mesh_drawable global_frame;
-	gui_parameters gui;
-	bool cursor_on_gui;
-};
 user_interaction_parameters user;
 
 
@@ -180,13 +162,4 @@ void mouse_move_callback(GLFWwindow* window, double xpos, double ypos)
 
 	user.mouse_prev = p1;
 }
-
-void opengl_uniform(GLuint shader, scene_environment const& current_scene)
-{
-	opengl_uniform(shader, "projection", current_scene.projection);
-	opengl_uniform(shader, "view", current_scene.camera.matrix_view());
-	opengl_uniform(shader, "light", current_scene.light, false);
-}
-
-
 
