@@ -26,7 +26,7 @@ vcl::vec3 evaluate_terrain2(float u, float v, vcl::mesh& terrain)
     return terrain.position[idx];
 }
 
-void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters)
+void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters, buffer<vec3> *courbes_fleuve)
 {
     // Number of samples in each direction (assuming a square grid)
     int const N = std::sqrt(terrain.position.size());
@@ -44,7 +44,7 @@ void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perl
             // Compute the Perlin noise
             float const noise = noise_perlin({u, v}, parameters.octave, parameters.persistency, parameters.frequency_gain);
 
-            if(is_water(u,v)){
+            if(is_water(terrain.position[idx].x,terrain.position[idx].y, courbes_fleuve)){
                 terrain.position[idx].z = 0;
                 // use noise as color value
                 terrain.color[idx] = 0.3f*vec3(0,0.0,1.0f)+0.7f*noise*vec3(1,1,1);
@@ -70,33 +70,26 @@ void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perl
 
 }
 
-bool is_water(float u, float v)
+bool is_water(float x, float y, buffer<vec3> *courbes_fleuve)
 {
-    positions_riveG = { {0,0.14,0}, {0,0.14,0}, {0.17,0.33,0}, {0.22,0.49,0}, {0.33,0.57,0}, {0.43,0.81,0}, {0.65,0.94,0}, {1,0.97,0}, {1,0.97,0} };
-    positions_ile = { {0.1,0,0}, {0.1,0,0}, {0.28,0.18,0}, {0.44,0.17,0}, {0.46,0,0}, {0.46,0,0} };
-    positions_riveD = { {1,0.07,0}, {1,0.07,0}, {0.73,0.17,0}, {0.6,0.37,0}, {0.53,0.53,0}, {0.56,0.62,0}, {0.72,0.70,0}, {1,0.73,0}, {1,0.73,0} };
-    buffer<vec3> *courbes_fleuve = new buffer<vec3>[3];
-    courbes_fleuve[0] = positions_riveG; // ranges abscisses croissants (ordre des points de la courbe)
-    courbes_fleuve[1] = positions_riveD; // ranges abscisses decroissants
-    courbes_fleuve[2] = positions_ile; // ranges abscisses croissants
-    float dt = 0.1;
+    float dt = 0.01;
 
-    for(int i=0; i<2; i++){
+    for(int i=0; i<3; i++){
         int N = courbes_fleuve[i].size();
         int cpt = 0;
         bool B = false;
         float t = 0;
         if(i != 1){
-            while(!B && cpt<N){
-                if(courbes_fleuve[0][cpt][0] >= u){
+            while(!B && cpt<N-1){
+                if(courbes_fleuve[i][cpt][0] >= x){
                     B = true;
                 }
                 cpt++;
             }
         }
         else{
-            while(!B && cpt<N){
-                if(courbes_fleuve[0][cpt][1] >= v){
+            while(!B && cpt<N-1){
+                if(courbes_fleuve[i][cpt][1] >= y){
                     B = true;
                 }
                 cpt++;
@@ -104,40 +97,32 @@ bool is_water(float u, float v)
         }
 
         if(B){
-            if(cpt == 1) cpt+=1; // on considère le seg [cpt, cpt+1] (on est tombé pile sur une abscisse d ept de controle)
-            if(cpt == N-1) cpt-=1; // on considère le seg [cpt-2, cpt-1]
-            float xprev = cardinal_spline_interpolation(t, 0, 1, 2, 3, courbes_fleuve[0][cpt-2], courbes_fleuve[0][cpt-1], courbes_fleuve[0][cpt], courbes_fleuve[0][cpt+1], 0.5)[0];
-            float yprev = cardinal_spline_interpolation(t, 0, 1, 2, 3, courbes_fleuve[0][cpt-2], courbes_fleuve[0][cpt-1], courbes_fleuve[0][cpt], courbes_fleuve[0][cpt+1], 0.5)[1];
-            float xsuiv = cardinal_spline_interpolation(t+dt, 0, 1, 2, 3, courbes_fleuve[0][cpt-2], courbes_fleuve[0][cpt-1], courbes_fleuve[0][cpt], courbes_fleuve[0][cpt+1], 0.5)[0];
-            float ysuiv = cardinal_spline_interpolation(t+dt, 0, 1, 2, 3, courbes_fleuve[0][cpt-2], courbes_fleuve[0][cpt-1], courbes_fleuve[0][cpt], courbes_fleuve[0][cpt+1], 0.5)[1];
+            if(cpt == 1) cpt+=1; // on considÃ¨re le seg [1, 2] ie le premier seg car on a double le premier pt (on est tombÃ© pile sur l'abscisse du premier pt de controle)
+            else cpt-=1;
+            vec3 pprev = cardinal_spline_interpolation(t, 0, 1, 2, 3, courbes_fleuve[i][cpt-2], courbes_fleuve[i][cpt-1], courbes_fleuve[i][cpt], courbes_fleuve[i][cpt+1], 0.5);
+            vec3 psuiv = cardinal_spline_interpolation(t+dt, 0, 1, 2, 3, courbes_fleuve[i][cpt-2], courbes_fleuve[i][cpt-1], courbes_fleuve[i][cpt], courbes_fleuve[i][cpt+1], 0.5);
             if(i!=1){
-                while(xsuiv < u){
+                while(psuiv[0] < x && t<1){
                     t += dt;
-                    xprev = xsuiv;
-                    yprev = ysuiv;
-                    xsuiv = cardinal_spline_interpolation(t+dt, 0, 1, 2, 3, courbes_fleuve[0][cpt-2], courbes_fleuve[0][cpt-1], courbes_fleuve[0][cpt], courbes_fleuve[0][cpt+1], 0.5)[0];
-                    ysuiv = cardinal_spline_interpolation(t+dt, 0, 1, 2, 3, courbes_fleuve[0][cpt-2], courbes_fleuve[0][cpt-1], courbes_fleuve[0][cpt], courbes_fleuve[0][cpt+1], 0.5)[1];
+                    pprev = psuiv;
+                    psuiv = cardinal_spline_interpolation(t+dt, 0, 1, 2, 3, courbes_fleuve[i][cpt-2], courbes_fleuve[i][cpt-1], courbes_fleuve[i][cpt], courbes_fleuve[i][cpt+1], 0.5);
                 }
-                float y_interpol = yprev + (ysuiv - yprev)*(u - xprev)/(xprev - xsuiv);
+                float y_interpol = pprev[1] + (psuiv[1] - pprev[1])/(psuiv[0] - pprev[0])*(x - pprev[0]);
                 //comparaison y_interpol et v en fonction de i (ie : de la rive)
-                if(i == 0 && v > y_interpol) return false;
-                if(i == 2 && v > y_interpol) return false;
+                if(i == 0 && y > y_interpol) return false;
+                if(i == 2 && y < y_interpol) return false;
             }
             else{
-                while(ysuiv < v){
+                while(psuiv[1] < y && t<1){
                     t += dt;
-                    xprev = xsuiv;
-                    yprev = ysuiv;
-                    xsuiv = cardinal_spline_interpolation(t+dt, 0, 1, 2, 3, courbes_fleuve[0][cpt-2], courbes_fleuve[0][cpt-1], courbes_fleuve[0][cpt], courbes_fleuve[0][cpt+1], 0.5)[0];
-                    ysuiv = cardinal_spline_interpolation(t+dt, 0, 1, 2, 3, courbes_fleuve[0][cpt-2], courbes_fleuve[0][cpt-1], courbes_fleuve[0][cpt], courbes_fleuve[0][cpt+1], 0.5)[1];
+                    pprev = psuiv;
+                    psuiv = cardinal_spline_interpolation(t+dt, 0, 1, 2, 3, courbes_fleuve[i][cpt-2], courbes_fleuve[i][cpt-1], courbes_fleuve[i][cpt], courbes_fleuve[i][cpt+1], 0.5);
                 }
-                float x_interpol = xprev + (xsuiv - xprev)*(v - yprev)/(yprev - ysuiv);
-                //comparaison y_interpol et v en fonction de i (ie : de la rive)
-                if(u > x_interpol) return false;
+                float x_interpol = pprev[0] + (psuiv[0] - pprev[0])/(psuiv[1] - pprev[1])*(y - pprev[1]);
+                //comparaison x_interpol et u en fonction de i (ie : de la rive)
+                if(x > x_interpol) return false;
             }
         }
     }
     return true;
 }
-
-

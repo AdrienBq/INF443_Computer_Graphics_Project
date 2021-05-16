@@ -14,11 +14,11 @@ struct perlin_noise_parameters
 // Initialize the mesh of the terrain
 vcl::mesh initialize_terrain();
 
-bool is_water(float u, float v);
+bool is_water(float u, float v, vcl::buffer<vcl::vec3> *courbes_fleuve);
 
 // Recompute the vertices of the terrain everytime a parameter is modified
 //  and update the mesh_drawable accordingly
-void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters);
+void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters, vcl::buffer<vcl::vec3> *courbes_fleuve);
 
 vcl::vec3 evaluate_terrain2(float u, float v, vcl::mesh& terrain);
 vcl::mesh initialize_terrain();
