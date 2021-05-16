@@ -105,8 +105,7 @@ void initialize_data()
     update_terrain(terrain, terrain_visual, parameters);
 
 	// Pyramid
-	pyramid = mesh_drawable(create_pyramid(2.0f, 2.0f));
-	pyramid.transform.translate.z = 2.0f;
+	//initialize_pyramid(pyramid, 8.0f);
 }
 
 
