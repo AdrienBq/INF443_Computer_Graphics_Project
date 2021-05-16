@@ -4,6 +4,7 @@
 #include "helpers/scene_helper.hpp"
 #include "items/terrain.hpp"
 #include "items/pyramid.hpp"
+#include "items/vegetation.hpp"
 
 
 using namespace vcl;
@@ -28,6 +29,7 @@ mesh_drawable terrain_visual;
 perlin_noise_parameters parameters;
 
 mesh_drawable pyramid;
+mesh_drawable palm_tree;
 
 
 int main(int, char* argv[])
@@ -106,6 +108,9 @@ void initialize_data()
 
 	// Pyramid
 	//initialize_pyramid(pyramid, 8.0f);
+
+	// Palm tree
+	//initialize_palm_tree(palm_tree, 4.0f);
 }
 
 
@@ -129,7 +134,8 @@ void display_frame()
         update_terrain(terrain, terrain_visual, parameters);
 	
 	draw(terrain_visual, scene);
-	draw(pyramid, scene);
+	//draw(pyramid, scene);
+	//draw(palm_tree, scene);
 }
 
 
