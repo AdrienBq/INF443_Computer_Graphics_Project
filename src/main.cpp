@@ -3,6 +3,7 @@
 
 #include "helpers/scene_helper.hpp"
 #include "items/terrain.hpp"
+#include "items/pyramid.hpp"
 
 
 using namespace vcl;
@@ -25,6 +26,8 @@ timer_interval timer;
 mesh terrain;
 mesh_drawable terrain_visual;
 perlin_noise_parameters parameters;
+
+mesh_drawable pyramid;
 
 
 int main(int, char* argv[])
@@ -100,6 +103,10 @@ void initialize_data()
     terrain = initialize_terrain();
     terrain_visual = mesh_drawable(terrain);
     update_terrain(terrain, terrain_visual, parameters);
+
+	// Pyramid
+	pyramid = mesh_drawable(create_pyramid(2.0f, 2.0f));
+	pyramid.transform.translate.z = 2.0f;
 }
 
 
@@ -121,6 +128,9 @@ void display_frame()
 
     if(update)// if any slider has been changed - then update the terrain
         update_terrain(terrain, terrain_visual, parameters);
+	
+	draw(terrain_visual, scene);
+	draw(pyramid, scene);
 }
 
 
