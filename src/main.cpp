@@ -39,7 +39,7 @@ int main(int, char* argv[])
 {
 	std::cout << "Run " << argv[0] << std::endl;
 
-	int const width = 1280, height = 1024;
+    int const width = 1280, height = 1024;
 	GLFWwindow* window = create_window(width, height);
 	window_size_callback(window, width, height);
 	std::cout << opengl_info_display() << std::endl;;
@@ -105,22 +105,15 @@ void initialize_data()
 	scene.camera.look_at({ -0.5f,2.5f,1 }, { 0,0,0 }, { 0,0,1 });
 
     // Create the terrain
-    buffer<vec3> positions_riveG = { {-10.0f,-7.2f,0.0f}, {-10.0f,-7.2f,0.0f}, {-6.6f,-3.4f,0.0f}, {-5.6f,-0.2f,0.0f}, {-5.4f,1.4f,0.0f}, {1.3f,6.2f,0.0f}, {6.5f,8.8f,0.0f}, {10.0f,9.4f,0.0f}, {10.0f,9.4f,0.0f} };
-    buffer<vec3> positions_ile = { {-7.0f,-10.0f,0.0f}, {-7.0f,-10.0f,0.0f}, {-4.6f,-6.4f,0.0f}, {-1.42f,-6.6f,0.0f}, {1.5f,-10.0f,0.0f}, {1.5f,-10.0f,0.0f} };
-    buffer<vec3> positions_riveD = { {10.0f,-8.6f,0.0f}, {10.0f,-8.6f,0.0f}, {6.6f,-6.6f,0.0f}, {4.0f,-2.6f,0.0f}, {2.6f,0.6f,0.0f}, {3.2f,2.4f,0.0f}, {6.4f,4.0f,0.0f}, {10.0f,4.6f,0.0f}, {10.0f,4.6f,0.0f} };
-    courbes_fleuve = new buffer<vec3>[3];
-    courbes_fleuve[0] = positions_riveG; // ranges abscisses croissants (ordre des points de la courbe)
-    courbes_fleuve[1] = positions_riveD; // ranges abscisses decroissants
-    courbes_fleuve[2] = positions_ile; // ranges abscisses croissants
     terrain = initialize_terrain();
     terrain_visual = mesh_drawable(terrain);
-    update_terrain(terrain, terrain_visual, parameters, courbes_fleuve);
+    update_terrain(terrain, terrain_visual, parameters);
 
     // Initialize drawable structures
-    sphere_keyframe = mesh_drawable( mesh_primitive_sphere(0.05f) );
+    /*sphere_keyframe = mesh_drawable( mesh_primitive_sphere(0.05f) );
     sphere_current  = mesh_drawable( mesh_primitive_sphere(0.06f) );
     sphere_keyframe.shading.color = {0,0,1};
-    sphere_current.shading.color  = {1,1,0};
+    sphere_current.shading.color  = {1,1,0}; */
 
 	// Pyramid
 	//initialize_pyramid(pyramid, 8.0f);
@@ -147,12 +140,13 @@ void display_frame()
     update |= ImGui::SliderFloat("Height", &parameters.terrain_height, 0.1f, 1.5f);
 
     if(update)// if any slider has been changed - then update the terrain
-        update_terrain(terrain, terrain_visual, parameters, courbes_fleuve);
+        update_terrain(terrain, terrain_visual, parameters);
 
+    /*
     for(int i=0; i<3; i++) {
         display_keypositions(sphere_keyframe, courbes_fleuve[i], scene, user.picking);
     }
-
+    */
 	
 	draw(terrain_visual, scene);
 	//draw(pyramid, scene);
