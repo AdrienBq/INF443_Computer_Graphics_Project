@@ -5,6 +5,7 @@
 #include "items/terrain.hpp"
 #include "items/pyramid.hpp"
 #include "items/vegetation.hpp"
+#include "items/bird.hpp"
 
 
 using namespace vcl;
@@ -33,6 +34,7 @@ buffer<vec3> *courbes_fleuve;
 
 mesh_drawable pyramid;
 mesh_drawable palm_tree;
+hierarchy_mesh_drawable bird;
 
 
 int main(int, char* argv[])
@@ -116,10 +118,13 @@ void initialize_data()
     sphere_current.shading.color  = {1,1,0}; */
 
 	// Pyramid
-	//initialize_pyramid(pyramid, 8.0f);
+	initialize_pyramid(pyramid, 8.0f);
 
 	// Palm tree
-	//initialize_palm_tree(palm_tree, 4.0f);
+	initialize_palm_tree(palm_tree, 4.0f);
+
+	// Bird
+	initialize_bird(bird, 1.0f);
 }
 
 
@@ -151,6 +156,7 @@ void display_frame()
 	draw(terrain_visual, scene);
 	//draw(pyramid, scene);
 	//draw(palm_tree, scene);
+	//draw(bird, scene);
 }
 
 

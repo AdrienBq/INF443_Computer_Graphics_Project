@@ -29,5 +29,7 @@ void initialize_pyramid(vcl::mesh_drawable &pyramid, float size)
 {
 	pyramid = mesh_drawable(create_pyramid(size, 2*size/3));
 	pyramid.transform.translate.z = 1.0f;
+	pyramid.transform.translate.x = -4.0f;
+	pyramid.transform.translate.y = -4.0f;
 	pyramid.shading.color = { 0.88f, 0.8f, 0.24f }; // Yellow
 }
