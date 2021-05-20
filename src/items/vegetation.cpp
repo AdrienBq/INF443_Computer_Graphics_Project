@@ -109,4 +109,5 @@ vcl::mesh create_palm_tree(float size, int N_leafs, float spreading)
 void initialize_palm_tree(vcl::mesh_drawable& palm_tree, float size)
 {
     palm_tree = mesh_drawable(create_palm_tree(size));
+    palm_tree.transform.translate.x = 4.0f;
 }
