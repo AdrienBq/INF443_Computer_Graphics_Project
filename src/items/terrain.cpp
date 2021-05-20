@@ -112,7 +112,7 @@ float evaluate_dune(float x, float y, float height)
         else possible_heights[i] = height*std::exp(-d*d);
     }
     float max = possible_heights[0];
-    for(int i=1; i<3; i++){     //bug sur la dune4
+    for(int i=1; i<4; i++){
         if(max < possible_heights[i]) max = possible_heights[i];
     }
     return max;
@@ -149,7 +149,7 @@ float dune3(float x)
 }
 float dune4(float x)
 {
-    return 16.333 + x*(-0.75 - x*0.0417);
+    return 16.5 + x*(-0.8333 + x*0.0417);
 }
 
 bool is_water(float x, float y)
