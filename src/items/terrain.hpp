@@ -19,10 +19,7 @@ float rive_droite(float y);
 float ile(float x);
 float dune(float x);
 
-float dune1(float x);
-float dune2(float x);
-float dune3(float x);
-float dune4(float x);
+vcl::vec4 heights_dunes(float x);
 vcl::vec4 dunes(float x);
 
 bool is_water(float x, float y);

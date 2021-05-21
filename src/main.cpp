@@ -153,10 +153,10 @@ void display_frame()
     }
     */
 	
-	draw(terrain_visual, scene);
-	//draw(pyramid, scene);
-	//draw(palm_tree, scene);
-	//draw(bird, scene);
+    draw(terrain_visual, scene);
+    //draw(pyramid, scene);
+    //draw(palm_tree, scene);
+    //draw(bird, scene);
 }
 
 

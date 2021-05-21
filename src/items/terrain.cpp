@@ -76,13 +76,15 @@ void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perl
                 // use also the noise as color value
                 terrain.color[idx] = vec3(0.87,0.70,0.5)+0.5f*noise*vec3(1,1,1);
                 // use the noise as height value
-                terrain.position[idx].z = parameters.terrain_height*noise*std::exp(-(terrain.position[idx].y-dune(terrain.position[idx].x))*(terrain.position[idx].y-dune(terrain.position[idx].x))) + evaluate_dune(terrain.position[idx].x,terrain.position[idx].y, 2*parameters.terrain_height);
+                terrain.position[idx].z = parameters.terrain_height*noise*
+                        std::exp(-(terrain.position[idx].y-dune(terrain.position[idx].x))*(terrain.position[idx].y-dune(terrain.position[idx].x)))
+                        + evaluate_dune(terrain.position[idx].x,terrain.position[idx].y, parameters.terrain_height);
             }
             else {
                 // use also the noise as color value
                 terrain.color[idx] = 0.3f*vec3(0,0.5f,0)+0.7f*noise*vec3(1,1,1);
                 // use the noise as height value
-                terrain.position[idx].z = parameters.terrain_height*noise + evaluate_dune(terrain.position[idx].x,terrain.position[idx].y, 2*parameters.terrain_height);
+                terrain.position[idx].z = parameters.terrain_height*noise + evaluate_dune(terrain.position[idx].x,terrain.position[idx].y, parameters.terrain_height);
             }
         }
     }
@@ -97,16 +99,27 @@ void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perl
 
 }
 
-float evaluate_dune(float x, float y, float height)
+float evaluate_dune(float x, float y, float height_param)
 {
     buffer<vec2> bornes = { {-8,-1}, {-8,-2}, {-2.5,7}, {2,8}};
     float *possible_heights = new float[4];
     float dist;
+    float height;
     float sig = 2.0f;
     for(int i=0; i<4; i++){
-        if(x<bornes[i][0]) dist = y - dunes(bornes[i][0])[i];
-        else if(x>bornes[i][1]) dist = y - dunes(bornes[i][1])[i];
-        else dist = y - dunes(x)[i];
+        if(x<bornes[i][0]) {
+            dist = y - dunes(bornes[i][0])[i];
+            //height = heights_dunes(bornes[i][0])[i]*height_param;
+        }
+        else if(x>bornes[i][1]) {
+            dist = y - dunes(bornes[i][1])[i];
+            //height = heights_dunes(bornes[i][1])[i]*height_param;
+        }
+        else {
+            dist = y - dunes(x)[i];
+            //height = heights_dunes(x)[i]*height_param;
+        }
+        height = 2*height_param;
         float d = dist*dist/sig;
         if(dist<0) possible_heights[i] = 1/((dist-1/std::sqrt(height))*(dist-1/std::sqrt(height)));
         else possible_heights[i] = height*std::exp(-d*d);
@@ -130,26 +143,20 @@ float rive_droite(float y)
 {
     return 2.599 + y*(0.1762 + y*(-0.032 + y*(0.0258 + y*(0.006 + y*0.0002))));
 }
-float dune(float x)
+float dune(float x)     //zone des dunes
 {
     return 10.767 + x*(0.3125 - x*0.0354);
 }
 
-float dune1(float x)
+vec4 dunes(float x)   //equation de la position des crêtes
 {
-    return 12.238 + x*(0.2857 - x*0.0476);
+    return {12.238 + x*(0.2857 - x*0.0476), 15 + x*(-0.0833 - x*0.0417),
+                14.12 + x*(0.2158 - x*0.0129), 16.5 + x*(-0.8333 + x*0.0417)};
 }
-float dune2(float x)
+vec4 heights_dunes(float x)     //hauteurs des crêtes
 {
-    return 15 + x*(-0.0833 - x*0.0417);
-}
-float dune3(float x)
-{
-    return 14.12 + x*(0.2158 - x*0.0129);
-}
-float dune4(float x)
-{
-    return 16.5 + x*(-0.8333 + x*0.0417);
+    return {2.9238 + x*(0.2536 - x*0.0298), 2.1 + x*(0.2167 - x*0.0333),
+                1.756 + x*(-0.0589 - x*0.0154), 2.2 + x*(0.1667 - x*0.0083)};
 }
 
 bool is_water(float x, float y)
@@ -180,11 +187,6 @@ bool is_dune(float x, float y)
 {
     if(y>dune(x)) return true;
     return false;
-}
-
-vec4 dunes(float x)
-{
-    return {dune1(x), dune2(x), dune3(x), dune4(x)};
 }
 
 float evaluate_dune1(float x, float y, float height)
