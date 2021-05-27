@@ -14,14 +14,14 @@ layout(location=0) out vec4 FragColor;
 
 uniform samplerCube image_texture;
 
-uniform vec3 light = vec3(1.0, 1.0, 1.0);
+uniform vec3 light = vec3(0.1, 0.1, 0.1);
 
-uniform vec3 color = vec3(1.0, 1.0, 1.0); // Uniform color of the object
-uniform float alpha = 1.0f; // alpha coefficient
+uniform vec3 color = vec3(0.2, 0.2, 0.6); // Uniform color of the object
+uniform float alpha = 0.0f; // alpha coefficient
 uniform float Ka = 0.4; // Ambient coefficient
 uniform float Kd = 0.8; // Diffuse coefficient
 uniform float Ks = 0.4f;// Specular coefficient
-uniform float specular_exp = 64.0; // Specular exponent
+uniform float specular_exp = 50.0; // Specular exponent
 uniform bool use_texture = true;
 uniform bool texture_inverse_y = false;
 

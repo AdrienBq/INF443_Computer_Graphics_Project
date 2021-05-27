@@ -7,9 +7,9 @@ GLuint cubemap_texture(std::string const& directory_path)
 	// Load images
 	image_raw const left = image_load_png(directory_path+"left.png");
 	image_raw const right = image_load_png(directory_path+"right.png");
-	image_raw const top = image_load_png(directory_path+"top.png");
-	image_raw const bottom = image_load_png(directory_path+"bottom.png");
-	image_raw const front = image_load_png(directory_path+"front.png");
+    image_raw const top = image_load_png(directory_path+"top.png");
+    image_raw const bottom = image_load_png(directory_path+"bottom.png");
+    image_raw const front = image_load_png(directory_path+"front.png");
 	image_raw const back = image_load_png(directory_path+"back.png");
 
 	// Send images to GPU as cubemap

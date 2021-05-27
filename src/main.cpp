@@ -118,7 +118,7 @@ void initialize_data()
     // Create skybox
     // Read shaders
     GLuint const shader_skybox = opengl_create_shader_program( read_text_file("../inf443/shader/skybox.vert.glsl"), read_text_file("../inf443/shader/skybox.frag.glsl"));
-    //GLuint const shader_environment_map = opengl_create_shader_program( read_text_file("../inf443/shader/environment_map.vert.glsl"), read_text_file("../01_environment_map/shader/environment_map.frag.glsl"));
+    GLuint const shader_environment_map = opengl_create_shader_program( read_text_file("../inf443/shader/environment_map.vert.glsl"), read_text_file("../inf443/shader/environment_map.frag.glsl"));
 
     // Read cubemap texture
     GLuint texture_cubemap = cubemap_texture("../inf443/pictures/skybox/");
@@ -138,7 +138,7 @@ void initialize_data()
     update_terrain_berge_haut(terrain, terrain_berge_haut, parameters);
     terrain_dune = mesh_drawable(terrain);
     update_terrain_dune(terrain, terrain_dune, parameters);
-    terrain_water = mesh_drawable(terrain);
+    terrain_water = mesh_drawable(terrain, shader_environment_map, texture_cubemap);
     update_terrain_water(terrain, terrain_water, parameters, t);
 
     // Texture Images load and association
@@ -186,7 +186,7 @@ void display_frame()
 {
 	// Update the current time
     timer.update();
-    timer.scale = 0.1f;
+    timer.scale = 0.02f;
     t = timer.t;
 
     ImGui::Checkbox("Frame", &user.gui.display_frame);
@@ -224,7 +224,7 @@ void display_frame()
     //draw(terrain_berge_haut, scene);
     //draw(terrain_herbe, scene);
     draw(terrain_dune, scene);
-    draw(terrain_water, scene);
+    draw_with_cubemap(terrain_water, scene);
     //draw(pyramid, scene);
     //draw(palm_tree, scene);
     //draw(bird, scene);

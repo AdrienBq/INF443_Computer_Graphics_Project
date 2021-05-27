@@ -129,7 +129,7 @@ void update_terrain_water(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual
             if(is_water(terrain.position[idx].x,terrain.position[idx].y)){
                 terrain.position[idx].z = parameters.terrain_height*0.2f*noise2;
                 // use noise as color value
-                terrain.color[idx] = 0.3f*vec3(0,0.0,1.0f);
+                //terrain.color[idx] = 0.3f*vec3(0,0.0,1.0f);
             }
         }
     }
