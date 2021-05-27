@@ -6,6 +6,7 @@
 #include "items/pyramid.hpp"
 #include "items/vegetation.hpp"
 #include "items/bird.hpp"
+#include "helpers/environment_map.hpp"
 
 
 using namespace vcl;
@@ -27,10 +28,18 @@ timer_interval timer;
 
 mesh terrain;
 mesh_drawable terrain_visual;
+mesh_drawable terrain_water;
+mesh_drawable terrain_berge_haut;
+mesh_drawable terrain_berge_bas;
+mesh_drawable terrain_herbe;
+mesh_drawable terrain_dune;
 perlin_noise_parameters parameters;
 mesh_drawable sphere_current;    // sphere used to display the interpolated value
 mesh_drawable sphere_keyframe;   // sphere used to display the key positions of berges
 buffer<vec3> *courbes_fleuve;
+float t = 0;
+
+mesh_drawable cube_map;
 
 mesh_drawable pyramid;
 mesh_drawable palm_tree;
@@ -73,7 +82,7 @@ int main(int, char* argv[])
 		ImGui::Begin("GUI", NULL, ImGuiWindowFlags_AlwaysAutoResize);
 		user.cursor_on_gui = ImGui::IsAnyWindowFocused();
 
-		if (user.gui.display_frame) draw(user.global_frame, scene);
+        //if (user.gui.display_frame) draw(user.global_frame, scene);
 
 		display_interface();
 		display_frame();
@@ -106,10 +115,54 @@ void initialize_data()
 	scene.camera.distance_to_center = 2.5f;
 	scene.camera.look_at({ -0.5f,2.5f,1 }, { 0,0,0 }, { 0,0,1 });
 
+    // Create skybox
+    // Read shaders
+    GLuint const shader_skybox = opengl_create_shader_program( read_text_file("../inf443/shader/skybox.vert.glsl"), read_text_file("../inf443/shader/skybox.frag.glsl"));
+    //GLuint const shader_environment_map = opengl_create_shader_program( read_text_file("../inf443/shader/environment_map.vert.glsl"), read_text_file("../01_environment_map/shader/environment_map.frag.glsl"));
+
+    // Read cubemap texture
+    GLuint texture_cubemap = cubemap_texture("../inf443/pictures/skybox/");
+
+    // Cube used to display the skybox
+    cube_map = mesh_drawable( mesh_primitive_cube({0,0,0},2.0f), shader_skybox, texture_cubemap);
+
     // Create the terrain
-    terrain = initialize_terrain();
-    terrain_visual = mesh_drawable(terrain);
-    update_terrain(terrain, terrain_visual, parameters);
+    terrain = create_terrain();
+    /*terrain_visual = mesh_drawable(terrain);
+    update_terrain(terrain, terrain_visual, parameters);*/
+    terrain_herbe = mesh_drawable(terrain);
+    update_terrain_herbe(terrain, terrain_herbe, parameters);
+    terrain_berge_bas = mesh_drawable(terrain);
+    update_terrain_berge_bas(terrain, terrain_berge_bas, parameters);
+    terrain_berge_haut = mesh_drawable(terrain);
+    update_terrain_berge_haut(terrain, terrain_berge_haut, parameters);
+    terrain_dune = mesh_drawable(terrain);
+    update_terrain_dune(terrain, terrain_dune, parameters);
+    terrain_water = mesh_drawable(terrain);
+    update_terrain_water(terrain, terrain_water, parameters, t);
+
+    // Texture Images load and association
+    //-----------------------------------
+
+    // Load an image dune from a file
+    image_raw const im1 = image_load_png("../inf443/pictures/texture_sable.png");
+
+    // Send this image to the GPU, and get its identifier texture_image_id
+    GLuint const texture_image_id1 = opengl_texture_to_gpu(im1,
+        GL_MIRRORED_REPEAT /**GL_TEXTURE_WRAP_S*/,
+        GL_MIRRORED_REPEAT /**GL_TEXTURE_WRAP_T*/);
+    // Associate the texture_image_id to the image texture used when displaying visual
+    terrain_dune.texture = texture_image_id1;
+
+    // Load an image herbe from a file
+    image_raw const im2 = image_load_png("../inf443/pictures/texture_grass.png");
+
+    // Send this image to the GPU, and get its identifier texture_image_id
+    GLuint const texture_image_id2 = opengl_texture_to_gpu(im2,
+        GL_MIRRORED_REPEAT /**GL_TEXTURE_WRAP_S*/,
+        GL_MIRRORED_REPEAT /**GL_TEXTURE_WRAP_T*/);
+    // Associate the texture_image_id to the image texture used when displaying visual
+    terrain_herbe.texture = texture_image_id2;
 
     // Initialize drawable structures
     /*sphere_keyframe = mesh_drawable( mesh_primitive_sphere(0.05f) );
@@ -132,8 +185,9 @@ void initialize_data()
 void display_frame()
 {
 	// Update the current time
-    //timer.update();
-    //float const t = timer.t;
+    timer.update();
+    timer.scale = 0.1f;
+    t = timer.t;
 
     ImGui::Checkbox("Frame", &user.gui.display_frame);
     ImGui::Checkbox("Wireframe", &user.gui.display_wireframe);
@@ -144,20 +198,38 @@ void display_frame()
     update |= ImGui::SliderInt("Octave", &parameters.octave, 1, 8);
     update |= ImGui::SliderFloat("Height", &parameters.terrain_height, 0.1f, 1.5f);
 
-    if(update)// if any slider has been changed - then update the terrain
-        update_terrain(terrain, terrain_visual, parameters);
+    if(update){// if any slider has been changed - then update the terrain
+        update_terrain_herbe(terrain, terrain_herbe, parameters);
+        update_terrain_berge_bas(terrain, terrain_berge_bas, parameters);
+        update_terrain_berge_haut(terrain, terrain_berge_haut, parameters);
+        update_terrain_dune(terrain, terrain_dune, parameters);
+        update_terrain_water(terrain, terrain_water, parameters, t);
+        //update_terrain(terrain, terrain_visual, parameters);
+    }
 
     /*
     for(int i=0; i<3; i++) {
         display_keypositions(sphere_keyframe, courbes_fleuve[i], scene, user.picking);
     }
     */
-	
-    draw(terrain_visual, scene);
+
+    update_terrain_water(terrain, terrain_water, parameters, t);
+
+    glDepthMask(GL_FALSE);
+    draw_with_cubemap(cube_map, scene);
+    glDepthMask(GL_TRUE);
+
+    //draw(terrain_visual, scene);
+    //draw(terrain_berge_bas, scene);
+    //draw(terrain_berge_haut, scene);
+    //draw(terrain_herbe, scene);
+    draw(terrain_dune, scene);
+    draw(terrain_water, scene);
     //draw(pyramid, scene);
     //draw(palm_tree, scene);
     //draw(bird, scene);
 }
+
 
 
 void display_interface()
@@ -174,7 +246,7 @@ void window_size_callback(GLFWwindow*, int width, int height)
 {
 	glViewport(0, 0, width, height);
 	float const aspect = width / static_cast<float>(height);
-	float const fov = 50.0f * pi / 180.0f;
+    float const fov = 50.0f * pi / 180.0f;
 	float const z_min = 0.1f;
 	float const z_max = 100.0f;
 	scene.projection = projection_perspective(fov, aspect, z_min, z_max);

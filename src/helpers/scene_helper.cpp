@@ -11,7 +11,7 @@ void display_keypositions(mesh_drawable& sphere, buffer<vec3> const& key_positio
 		else
 			sphere.shading.color = {0,0,1};
 		sphere.transform.translate = key_positions[k];
-		draw(sphere, scene);
+        //draw(sphere, scene);
 	}
 }
 

@@ -4,15 +4,18 @@
 
 struct perlin_noise_parameters
 {
-    float persistency = 0.36f;
+    float persistency = 0.38f;
     float frequency_gain = 2.25f;
     int octave = 6;
-    float terrain_height = 0.5f;
+    float terrain_height = 0.8f;
 };
 
 
 // Initialize the mesh of the terrain
 vcl::mesh initialize_terrain();
+vcl::mesh create_terrain();
+vcl::vec3 evaluate_terrain2(float u, float v, vcl::mesh& terrain);
+vcl::vec3 evaluate_terrain(float u, float v);
 
 float rive_gauche(float y);
 float rive_droite(float y);
@@ -34,7 +37,12 @@ float evaluate_dune1(float x, float y, float height);
 // Recompute the vertices of the terrain everytime a parameter is modified
 //  and update the mesh_drawable accordingly
 void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters);
+void update_terrain_water(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters, float t);
+void update_terrain_berge_bas(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters);
+void update_terrain_berge_haut(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters);
+void update_terrain_herbe(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters);
+void update_terrain_dune(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters);
 
-vcl::vec3 evaluate_terrain2(float u, float v, vcl::mesh& terrain);
-vcl::mesh initialize_terrain();
+
+
 

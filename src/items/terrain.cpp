@@ -19,7 +19,7 @@ float taille_berge2 = 0.3;
 vcl::mesh initialize_terrain()
 {
     int const terrain_sample = 360;
-    mesh terrain = mesh_primitive_grid({-8,-15,0},{8,-15,0},{8,15,0},{-8,15,0},terrain_sample,terrain_sample);
+    mesh terrain = mesh_primitive_grid({-8,-15,0},{8,-15,0},{8,15,0},{-8,15,0},terrain_sample,15/8*terrain_sample);
     return terrain;
 }
 
@@ -33,6 +33,14 @@ vcl::vec3 evaluate_terrain2(float u, float v, vcl::mesh& terrain)
     int const idx = ku*N+kv;
 
     return terrain.position[idx];
+}
+
+vcl::vec3 evaluate_terrain(float u, float v)
+{
+    float x = (u-0.5f)*16;
+    float y = (v-0.5f)*30;
+    float z = 0.0f;
+    return {x,y,z};
 }
 
 void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters)
@@ -98,6 +106,197 @@ void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perl
     terrain_visual.update_color(terrain.color);
 
 }
+
+void update_terrain_water(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters, float t)
+{
+    // Number of samples in each direction (assuming a square grid)
+    int const N = std::sqrt(terrain.position.size());
+
+    // Recompute the new vertices
+    for (int ku = 0; ku < N; ++ku) {
+        for (int kv = 0; kv < N; ++kv) {
+
+            // Compute local parametric coordinates (u,v) \in [0,1]
+            const float u = ku/(N-1.0f);
+            const float v = kv/(N-1.0f);
+
+            int const idx = ku*N+kv;
+
+            // Compute the Perlin noise
+            //float const noise1 = noise_perlin({u, v}, parameters.octave, parameters.persistency, parameters.frequency_gain);
+            float const noise2 = noise_perlin({u, v}, 6.0f, 0.6f, 2.25 - 0.3*sin(pi/2 + pi*t));
+
+            if(is_water(terrain.position[idx].x,terrain.position[idx].y)){
+                terrain.position[idx].z = parameters.terrain_height*0.2f*noise2;
+                // use noise as color value
+                terrain.color[idx] = 0.3f*vec3(0,0.0,1.0f);
+            }
+        }
+    }
+
+    // Update the normal of the mesh structure
+    terrain.compute_normal();
+
+    // Update step: Allows to update a mesh_drawable without creating a new one
+    terrain_visual.update_position(terrain.position);
+    terrain_visual.update_normal(terrain.normal);
+    terrain_visual.update_color(terrain.color);
+}
+
+void update_terrain_berge_bas(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters)
+{
+    // Number of samples in each direction (assuming a square grid)
+    int const N = std::sqrt(terrain.position.size());
+
+    // Recompute the new vertices
+    for (int ku = 0; ku < N; ++ku) {
+        for (int kv = 0; kv < N; ++kv) {
+
+            // Compute local parametric coordinates (u,v) \in [0,1]
+            const float u = ku/(N-1.0f);
+            const float v = kv/(N-1.0f);
+
+            int const idx = ku*N+kv;
+
+            // Compute the Perlin noise
+            float const noise = noise_perlin({u, v}, parameters.octave, parameters.persistency, parameters.frequency_gain);
+
+            if (!is_water(terrain.position[idx].x,terrain.position[idx].y)
+                    && is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge1)){
+                // use the noise as height value
+                terrain.position[idx].z = parameters.terrain_height*noise*0.5;
+                // use noise as color value
+                terrain.color[idx] = vec3(0.31f,0.17f,0.04f)+0.5f*noise*vec3(1,1,1);
+            }
+        }
+    }
+
+    // Update the normal of the mesh structure
+    terrain.compute_normal();
+
+    // Update step: Allows to update a mesh_drawable without creating a new one
+    terrain_visual.update_position(terrain.position);
+    terrain_visual.update_normal(terrain.normal);
+    terrain_visual.update_color(terrain.color);
+}
+
+void update_terrain_berge_haut(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters)
+{
+    // Number of samples in each direction (assuming a square grid)
+    int const N = std::sqrt(terrain.position.size());
+
+    // Recompute the new vertices
+    for (int ku = 0; ku < N; ++ku) {
+        for (int kv = 0; kv < N; ++kv) {
+
+            // Compute local parametric coordinates (u,v) \in [0,1]
+            const float u = ku/(N-1.0f);
+            const float v = kv/(N-1.0f);
+
+            int const idx = ku*N+kv;
+
+            // Compute the Perlin noise
+            float const noise = noise_perlin({u, v}, parameters.octave, parameters.persistency, parameters.frequency_gain);
+
+            if (!is_water(terrain.position[idx].x,terrain.position[idx].y)
+                    && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge1)
+                    && is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge2)){
+                // use the noise as height value
+                terrain.position[idx].z = parameters.terrain_height*noise;
+                // use noise as color value
+                terrain.color[idx] = vec3(0.34f,0.16f,0.0f)+0.5f*noise*vec3(1,1,1);
+            }
+
+        }
+    }
+
+    // Update the normal of the mesh structure
+    terrain.compute_normal();
+
+    // Update step: Allows to update a mesh_drawable without creating a new one
+    terrain_visual.update_position(terrain.position);
+    terrain_visual.update_normal(terrain.normal);
+    terrain_visual.update_color(terrain.color);
+}
+
+void update_terrain_herbe(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters)
+{
+    // Number of samples in each direction (assuming a square grid)
+    int const N = std::sqrt(terrain.position.size());
+
+    // Recompute the new vertices
+    for (int ku = 0; ku < N; ++ku) {
+        for (int kv = 0; kv < N; ++kv) {
+
+            // Compute local parametric coordinates (u,v) \in [0,1]
+            const float u = ku/(N-1.0f);
+            const float v = kv/(N-1.0f);
+
+            int const idx = ku*N+kv;
+
+            // Compute the Perlin noise
+            float const noise = noise_perlin({u, v}, parameters.octave, parameters.persistency, parameters.frequency_gain);
+
+            if(!is_water(terrain.position[idx].x,terrain.position[idx].y)
+                     && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge1)
+                     && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge2)
+                     && !is_dune(terrain.position[idx].x,terrain.position[idx].y) )
+            {
+                // use also the noise as color value
+                terrain.color[idx] = 0.3f*vec3(0,0.5f,0)+0.7f*noise*vec3(1,1,1);
+                // use the noise as height value
+                terrain.position[idx].z = parameters.terrain_height*noise + evaluate_dune(terrain.position[idx].x,terrain.position[idx].y, parameters.terrain_height);
+            }
+        }
+    }
+
+    // Update the normal of the mesh structure
+    terrain.compute_normal();
+
+    // Update step: Allows to update a mesh_drawable without creating a new one
+    terrain_visual.update_position(terrain.position);
+    terrain_visual.update_normal(terrain.normal);
+    terrain_visual.update_color(terrain.color);
+}
+
+void update_terrain_dune(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters)
+{
+    // Number of samples in each direction (assuming a square grid)
+    int const N = std::sqrt(terrain.position.size());
+
+    // Recompute the new vertices
+    for (int ku = 0; ku < N; ++ku) {
+        for (int kv = 0; kv < N; ++kv) {
+
+            // Compute local parametric coordinates (u,v) \in [0,1]
+            const float u = ku/(N-1.0f);
+            const float v = kv/(N-1.0f);
+
+            int const idx = ku*N+kv;
+
+            // Compute the Perlin noise
+            float const noise = noise_perlin({u, v}, parameters.octave, parameters.persistency, parameters.frequency_gain);
+
+            if (is_dune(terrain.position[idx].x,terrain.position[idx].y)){
+                // use also the noise as color value
+                terrain.color[idx] = vec3(0.87,0.70,0.5)+0.5f*noise*vec3(1,1,1);
+                // use the noise as height value
+                terrain.position[idx].z = parameters.terrain_height*noise*
+                        std::exp(-(terrain.position[idx].y-dune(terrain.position[idx].x))*(terrain.position[idx].y-dune(terrain.position[idx].x)))
+                        + evaluate_dune(terrain.position[idx].x,terrain.position[idx].y, parameters.terrain_height);
+            }
+        }
+    }
+
+    // Update the normal of the mesh structure
+    terrain.compute_normal();
+
+    // Update step: Allows to update a mesh_drawable without creating a new one
+    terrain_visual.update_position(terrain.position);
+    terrain_visual.update_normal(terrain.normal);
+    terrain_visual.update_color(terrain.color);
+}
+
 
 float evaluate_dune(float x, float y, float height_param)
 {
@@ -293,4 +492,52 @@ bool is_water1(float x, float y, buffer<vec3> *courbes_fleuve)
         }
     }
     return true;
+}
+
+
+mesh create_terrain()
+{
+    // Number of samples of the terrain is N x N
+    const unsigned int N = 100;
+
+    mesh terrain; // temporary terrain storage (CPU only)
+    terrain.position.resize(N*N);
+    terrain.uv.resize(N*N);
+
+    // Fill terrain geometry
+    for(unsigned int ku=0; ku<N; ++ku)
+    {
+        for(unsigned int kv=0; kv<N; ++kv)
+        {
+            // Compute local parametric coordinates (u,v) \in [0,1]
+            const float u = ku/(N-1.0f);
+            const float v = kv/(N-1.0f);
+
+            // Compute the local surface function
+            vec3 const p = evaluate_terrain(u,v);
+
+            // Store vertex coordinates
+            terrain.position[kv+N*ku] = p;
+            terrain.uv[kv+N*ku] = {10*u,10*v};
+        }
+    }
+
+    // Generate triangle organization
+    //  Parametric surface with uniform grid sampling: generate 2 triangles for each grid cell
+    for(size_t ku=0; ku<N-1; ++ku)
+    {
+        for(size_t kv=0; kv<N-1; ++kv)
+        {
+            const unsigned int idx = kv + N*ku; // current vertex offset
+
+            const uint3 triangle_1 = {idx, idx+1+N, idx+1};
+            const uint3 triangle_2 = {idx, idx+N, idx+1+N};
+
+            terrain.connectivity.push_back(triangle_1);
+            terrain.connectivity.push_back(triangle_2);
+        }
+    }
+
+    terrain.fill_empty_field(); // need to call this function to fill the other buffer with default values (normal, color, etc)
+    return terrain;
 }
