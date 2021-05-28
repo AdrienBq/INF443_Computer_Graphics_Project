@@ -6,6 +6,7 @@
 #include "items/pyramid.hpp"
 #include "items/vegetation.hpp"
 #include "items/bird.hpp"
+#include "items/boat.hpp"
 #include "helpers/environment_map.hpp"
 
 
@@ -44,6 +45,7 @@ mesh_drawable cube_map;
 mesh_drawable pyramid;
 mesh_drawable palm_tree;
 hierarchy_mesh_drawable bird;
+mesh_drawable boat;
 
 
 int main(int, char* argv[])
@@ -178,6 +180,9 @@ void initialize_data()
 
 	// Bird
 	initialize_bird(bird, 1.0f);
+
+    // Boat
+    initialize_boat(boat, 1.0f);
 }
 
 
@@ -228,6 +233,7 @@ void display_frame()
     draw(pyramid, scene);
     draw(palm_tree, scene);
     draw(bird, scene);
+    draw(boat, scene);
 }
 
 
