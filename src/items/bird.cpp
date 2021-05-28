@@ -78,5 +78,6 @@ vcl::hierarchy_mesh_drawable create_bird(bird_parameters &parameters, float size
 void initialize_bird(hierarchy_mesh_drawable& bird, float size)
 {
 	bird = create_bird(default_bird, size);
-	bird["body"].transform.translate.z = 4.0f;
+	bird["body"].transform.translate = { 3.0f, 0.0f, 5.0f };
+	bird.update_local_to_global_coordinates();
 }
