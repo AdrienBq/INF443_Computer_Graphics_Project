@@ -117,11 +117,11 @@ void initialize_data()
 
     // Create skybox
     // Read shaders
-    GLuint const shader_skybox = opengl_create_shader_program( read_text_file("../inf443/shader/skybox.vert.glsl"), read_text_file("../inf443/shader/skybox.frag.glsl"));
-    GLuint const shader_environment_map = opengl_create_shader_program( read_text_file("../inf443/shader/environment_map.vert.glsl"), read_text_file("../inf443/shader/environment_map.frag.glsl"));
-
+    GLuint const shader_skybox = opengl_create_shader_program(read_text_file("shader/skybox.vert.glsl"), read_text_file("shader/skybox.frag.glsl"));
+    GLuint const shader_environment_map = opengl_create_shader_program(read_text_file("shader/environment_map.vert.glsl"), read_text_file("shader/environment_map.frag.glsl"));
+    
     // Read cubemap texture
-    GLuint texture_cubemap = cubemap_texture("../inf443/pictures/skybox/");
+    GLuint texture_cubemap = cubemap_texture("pictures/skybox/");
 
     // Cube used to display the skybox
     cube_map = mesh_drawable( mesh_primitive_cube({0,0,0},2.0f), shader_skybox, texture_cubemap);
@@ -145,7 +145,7 @@ void initialize_data()
     //-----------------------------------
 
     // Load an image dune from a file
-    image_raw const im1 = image_load_png("../inf443/pictures/texture_sable.png");
+    image_raw const im1 = image_load_png("pictures/texture_sable.png");
 
     // Send this image to the GPU, and get its identifier texture_image_id
     GLuint const texture_image_id1 = opengl_texture_to_gpu(im1,
@@ -155,7 +155,7 @@ void initialize_data()
     terrain_dune.texture = texture_image_id1;
 
     // Load an image herbe from a file
-    image_raw const im2 = image_load_png("../inf443/pictures/texture_grass.png");
+    image_raw const im2 = image_load_png("pictures/texture_grass.png");
 
     // Send this image to the GPU, and get its identifier texture_image_id
     GLuint const texture_image_id2 = opengl_texture_to_gpu(im2,
@@ -225,9 +225,9 @@ void display_frame()
     //draw(terrain_herbe, scene);
     draw(terrain_dune, scene);
     draw_with_cubemap(terrain_water, scene);
-    //draw(pyramid, scene);
-    //draw(palm_tree, scene);
-    //draw(bird, scene);
+    draw(pyramid, scene);
+    draw(palm_tree, scene);
+    draw(bird, scene);
 }
 
 

@@ -349,13 +349,13 @@ float dune(float x)     //zone des dunes
 
 vec4 dunes(float x)   //equation de la position des crêtes
 {
-    return {12.238 + x*(0.2857 - x*0.0476), 15 + x*(-0.0833 - x*0.0417),
-                14.12 + x*(0.2158 - x*0.0129), 16.5 + x*(-0.8333 + x*0.0417)};
+    return {12.238f + x*(0.2857f - x*0.0476f), 15.0f + x*(-0.0833f - x*0.0417f),
+                14.12f + x*(0.2158f - x*0.0129f), 16.5f + x*(-0.8333f + x*0.0417f)};
 }
 vec4 heights_dunes(float x)     //hauteurs des crêtes
 {
-    return {2.9238 + x*(0.2536 - x*0.0298), 2.1 + x*(0.2167 - x*0.0333),
-                1.756 + x*(-0.0589 - x*0.0154), 2.2 + x*(0.1667 - x*0.0083)};
+    return {2.9238f + x*(0.2536f - x*0.0298f), 2.1f + x*(0.2167f - x*0.0333f),
+                1.756f + x*(-0.0589f - x*0.0154f), 2.2f + x*(0.1667f - x*0.0083f)};
 }
 
 bool is_water(float x, float y)
@@ -439,7 +439,7 @@ float evaluate_dune1(float x, float y, float height)
 
 bool is_water1(float x, float y, buffer<vec3> *courbes_fleuve)
 {
-    float dt = 0.01;
+    float dt = 0.01f;
 
     for(int i=0; i<3; i++){
         int N = courbes_fleuve[i].size();
