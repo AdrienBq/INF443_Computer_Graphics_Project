@@ -129,7 +129,7 @@ void initialize_data()
     // Cube used to display the skybox
     mesh cube = mesh_primitive_cube({0,0,0},2.0f);
     cube_map = mesh_drawable( cube, shader_skybox, texture_cubemap);
-    update_cube(cube, cube_map);
+    //rotate_terrain(cube, cube_map);
 
     // Create the terrain
     terrain = create_terrain();

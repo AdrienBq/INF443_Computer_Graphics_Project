@@ -45,6 +45,6 @@ void update_terrain_herbe(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual
 void update_terrain_dune(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters);
 
 GLuint texture(const std::string& filename);
-void update_cube(vcl::mesh& cube, vcl::mesh_drawable& cube_visual);
+void rotate_terrain(vcl::mesh& cube, vcl::mesh_drawable& cube_visual);
 
 

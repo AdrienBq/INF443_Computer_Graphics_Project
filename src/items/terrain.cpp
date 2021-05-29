@@ -152,10 +152,10 @@ void update_terrain_water(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual
     terrain_visual.update_color(terrain.color);
 }
 
-void update_cube(vcl::mesh& cube, vcl::mesh_drawable& cube_visual)
+void rotate_terrain(vcl::mesh& cube, vcl::mesh_drawable& cube_visual)
 {
     // Number of samples in each direction (assuming a square grid)
-    int const N = std::cbrt(cube.position.size());
+    int const N = cube.position.size();
 
     // rotation matrix
     mat3 R = {
@@ -166,13 +166,8 @@ void update_cube(vcl::mesh& cube, vcl::mesh_drawable& cube_visual)
     };
 
     // Recompute the new vertices
-    for (int kw=0; kw<N; ++kw) {
-        for (int ku = 0; ku < N; ++ku) {
-            for (int kv = 0; kv < N; ++kv) {
-                int idx = N*N*kw + N*ku + kv;
-                cube.position[idx] = R*cube.position[idx];
-            }
-        }
+    for (int idx=0; idx<N; ++idx) {
+        cube.position[idx] = R*cube.position[idx];
     }
     // Update the normal of the mesh structure
     cube.compute_normal();
