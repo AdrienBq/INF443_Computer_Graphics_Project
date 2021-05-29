@@ -46,6 +46,7 @@ mesh_drawable pyramid;
 mesh_drawable palm_tree;
 hierarchy_mesh_drawable bird;
 mesh_drawable boat;
+mesh_drawable fern;
 
 
 int main(int, char* argv[])
@@ -183,6 +184,9 @@ void initialize_data()
 
     // Boat
     initialize_boat(boat, 1.0f);
+
+    // Fern
+    initialize_fern(fern, 1.0f);
 }
 
 
@@ -234,6 +238,7 @@ void display_frame()
     draw(palm_tree, scene);
     draw(bird, scene);
     draw(boat, scene);
+    draw(fern, scene);
 }
 
 

@@ -1,5 +1,6 @@
 #include "vegetation.hpp"
 
+
 using namespace vcl;
 
 
@@ -110,4 +111,85 @@ void initialize_palm_tree(vcl::mesh_drawable& palm_tree, float size)
 {
     palm_tree = mesh_drawable(create_palm_tree(size));
     palm_tree.transform.translate.x = 4.0f;
+}
+
+
+
+
+vcl::mesh create_leaf(float length, float max_width)
+{
+    // TO DO
+    return vcl::mesh_primitive_arrow();
+}
+
+
+void rule_leaf(std::vector<vcl::mesh> &list_leafs, int N)
+{
+    // TO DO
+}
+
+
+void rule_trunk(std::vector<vcl::mesh> &list_trunks, std::vector<vcl::vec3> list_centers, float r, float h, int N)
+{
+    int s = list_trunks.size();
+    for (int i = 0; i < s; i++) {
+        // TO DO
+        mesh trunk = create_tree_trunk_cylinder(r, h);
+        int p = trunk.position.size();
+        for (int k = 0; k < p; k++) {
+            trunk.position[k] += list_centers[0];
+        }
+        list_trunks.push_back(trunk);
+        list_centers.push_back(list_centers[0]);
+        for (int j = 0; j < 6; j++) {
+            mesh trunk = create_tree_trunk_cylinder(r, h);
+            vcl::vec3 center = list_centers[0] + vcl::vec3(2 * r * std::cos(1.047 * j), 2 * r * std::sin(1.047 * j), 0.0f);
+            int p = trunk.position.size();
+            for (int k = 0; k < p; k++) {
+                trunk.position[k] += center;
+            }
+            list_trunks.push_back(trunk);
+            list_centers.push_back(center);
+        }
+        list_trunks.erase(list_trunks.begin());
+        list_centers.erase(list_centers.begin());
+    }
+}
+
+
+void leaf_to_triangles(vcl::mesh &leaf, int N)
+{
+    // TO DO
+}
+
+
+vcl::mesh create_fern(float length, float max_width, float radius, float height, int detail_level, int N_leafs)
+{
+    const unsigned int N = 100;
+    std::vector<vcl::mesh> list_leafs, list_trunks;
+    std::vector<vcl::vec3> list_centers;
+    list_trunks.push_back(create_tree_trunk_cylinder(radius, height));
+    list_centers.push_back(vec3(0.0f, 0.0f, 0.0f));
+    for (int i = 0; i < detail_level; i++) {
+        radius /= 3;
+        rule_leaf(list_leafs, N);
+        rule_trunk(list_trunks, list_centers, radius, height, N);  
+    }
+    vcl::mesh fern;
+    for (auto leaf : list_leafs) {
+        leaf_to_triangles(leaf, N);
+        fern.push_back(leaf);
+    }
+    for (auto trunk : list_trunks) {
+        fern.push_back(trunk);
+    }
+    fern.fill_empty_field();
+    return fern;
+}
+
+
+void initialize_fern(vcl::mesh_drawable& fern, float size)
+{
+    fern = mesh_drawable(create_fern(1.0f, 0.3f, 0.3f, 0.2f, 2));
+    fern.transform.translate.z = 0.4f;
 }
