@@ -127,7 +127,9 @@ void initialize_data()
     GLuint texture_cubemap = cubemap_texture("pictures/skybox/");
 
     // Cube used to display the skybox
-    cube_map = mesh_drawable( mesh_primitive_cube({0,0,0},2.0f), shader_skybox, texture_cubemap);
+    mesh cube = mesh_primitive_cube({0,0,0},2.0f);
+    cube_map = mesh_drawable( cube, shader_skybox, texture_cubemap);
+    update_cube(cube, cube_map);
 
     // Create the terrain
     terrain = create_terrain();

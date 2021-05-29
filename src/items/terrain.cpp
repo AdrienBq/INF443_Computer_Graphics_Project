@@ -152,6 +152,37 @@ void update_terrain_water(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual
     terrain_visual.update_color(terrain.color);
 }
 
+void update_cube(vcl::mesh& cube, vcl::mesh_drawable& cube_visual)
+{
+    // Number of samples in each direction (assuming a square grid)
+    int const N = std::cbrt(cube.position.size());
+
+    // rotation matrix
+    mat3 R = {
+        1,0,0,0,
+        0,0,-1,0,
+        0,1,0,0,
+        0,0,0,1
+    };
+
+    // Recompute the new vertices
+    for (int kw=0; kw<N; ++kw) {
+        for (int ku = 0; ku < N; ++ku) {
+            for (int kv = 0; kv < N; ++kv) {
+                int idx = N*N*kw + N*ku + kv;
+                cube.position[idx] = R*cube.position[idx];
+            }
+        }
+    }
+    // Update the normal of the mesh structure
+    cube.compute_normal();
+
+    // Update step: Allows to update a mesh_drawable without creating a new one
+    cube_visual.update_position(cube.position);
+    cube_visual.update_normal(cube.normal);
+    cube_visual.update_color(cube.color);
+}
+
 void update_terrain_berge_bas(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters)
 {
     // Number of samples in each direction (assuming a square grid)
