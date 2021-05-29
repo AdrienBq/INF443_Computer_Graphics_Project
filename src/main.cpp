@@ -124,7 +124,7 @@ void initialize_data()
     GLuint const shader_environment_map = opengl_create_shader_program(read_text_file("shader/environment_map.vert.glsl"), read_text_file("shader/environment_map.frag.glsl"));
     
     // Read cubemap texture
-    GLuint texture_cubemap = cubemap_texture("pictures/skybox/");
+    GLuint texture_cubemap = cubemap_texture("pictures/skybox_b/");
 
     // Cube used to display the skybox
     mesh cube = mesh_primitive_cube({0,0,0},2.0f);
