@@ -134,44 +134,15 @@ void initialize_data()
     /*terrain_visual = mesh_drawable(terrain);
     update_terrain(terrain, terrain_visual, parameters);*/
     terrain_herbe = mesh_drawable(terrain);
-    update_terrain_herbe(terrain, terrain_herbe, parameters);
-    terrain_berge_bas = mesh_drawable(terrain);
-    update_terrain_berge_bas(terrain, terrain_berge_bas, parameters);
-    terrain_berge_haut = mesh_drawable(terrain);
-    update_terrain_berge_haut(terrain, terrain_berge_haut, parameters);
-    terrain_dune = mesh_drawable(terrain);
-    update_terrain_dune(terrain, terrain_dune, parameters);
     terrain_water = mesh_drawable(terrain, shader_environment_map, texture_cubemap);
-    update_terrain_water(terrain, terrain_water, parameters, t);
+    terrain_berge_bas = mesh_drawable(terrain);
+    terrain_berge_haut = mesh_drawable(terrain);
+    terrain_dune = mesh_drawable(terrain);
+    update_terrain(terrain,terrain_herbe,terrain_berge_bas, terrain_berge_haut,terrain_dune,terrain_water, parameters, t);
 
     // Texture Images load and association
-    //-----------------------------------
-
-    // Load an image dune from a file
-    image_raw const im1 = image_load_png("pictures/texture_sable.png");
-
-    // Send this image to the GPU, and get its identifier texture_image_id
-    GLuint const texture_image_id1 = opengl_texture_to_gpu(im1,
-        GL_MIRRORED_REPEAT /**GL_TEXTURE_WRAP_S*/,
-        GL_MIRRORED_REPEAT /**GL_TEXTURE_WRAP_T*/);
-    // Associate the texture_image_id to the image texture used when displaying visual
-    terrain_dune.texture = texture_image_id1;
-
-    // Load an image herbe from a file
-    image_raw const im2 = image_load_png("pictures/texture_grass.png");
-
-    // Send this image to the GPU, and get its identifier texture_image_id
-    GLuint const texture_image_id2 = opengl_texture_to_gpu(im2,
-        GL_MIRRORED_REPEAT /**GL_TEXTURE_WRAP_S*/,
-        GL_MIRRORED_REPEAT /**GL_TEXTURE_WRAP_T*/);
-    // Associate the texture_image_id to the image texture used when displaying visual
-    terrain_herbe.texture = texture_image_id2;
-
-    // Initialize drawable structures
-    /*sphere_keyframe = mesh_drawable( mesh_primitive_sphere(0.05f) );
-    sphere_current  = mesh_drawable( mesh_primitive_sphere(0.06f) );
-    sphere_keyframe.shading.color = {0,0,1};
-    sphere_current.shading.color  = {1,1,0}; */
+    terrain_dune.texture = texture("pictures/texture_sable.png");
+    terrain_herbe.texture = texture("pictures/texture_grass.png");
 
 	// Pyramid
 	initialize_pyramid(pyramid, 8.0f);

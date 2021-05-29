@@ -107,6 +107,15 @@ void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perl
 
 }
 
+void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual1, vcl::mesh_drawable& terrain_visual2, vcl::mesh_drawable& terrain_visual3, vcl::mesh_drawable& terrain_visual4, vcl::mesh_drawable& terrain_visual5, perlin_noise_parameters const& parameters, float t)
+{
+    update_terrain_herbe(terrain, terrain_visual1, parameters);
+    update_terrain_berge_bas(terrain, terrain_visual2, parameters);
+    update_terrain_berge_haut(terrain, terrain_visual3, parameters);
+    update_terrain_dune(terrain, terrain_visual4, parameters);
+    update_terrain_water(terrain, terrain_visual5, parameters, t);
+}
+
 void update_terrain_water(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters, float t)
 {
     // Number of samples in each direction (assuming a square grid)
@@ -498,7 +507,7 @@ bool is_water1(float x, float y, buffer<vec3> *courbes_fleuve)
 mesh create_terrain()
 {
     // Number of samples of the terrain is N x N
-    const unsigned int N = 100;
+    const unsigned int N = 360;
 
     mesh terrain; // temporary terrain storage (CPU only)
     terrain.position.resize(N*N);
@@ -540,4 +549,17 @@ mesh create_terrain()
 
     terrain.fill_empty_field(); // need to call this function to fill the other buffer with default values (normal, color, etc)
     return terrain;
+}
+
+GLuint texture(const std::string& filename)
+{
+    // Load an image dune from a file
+    image_raw const im1 = image_load_png(filename);
+
+    // Send this image to the GPU, and get its identifier texture_image_id
+    GLuint const texture_image_id1 = opengl_texture_to_gpu(im1,
+        GL_MIRRORED_REPEAT /**GL_TEXTURE_WRAP_S*/,
+        GL_MIRRORED_REPEAT /**GL_TEXTURE_WRAP_T*/);
+    // Associate the texture_image_id to the image texture used when displaying visual
+    return texture_image_id1;
 }
