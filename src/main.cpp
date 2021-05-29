@@ -5,6 +5,7 @@
 #include "items/terrain.hpp"
 #include "items/pyramid.hpp"
 #include "items/vegetation.hpp"
+#include "items/columns.hpp"
 #include "items/bird.hpp"
 #include "items/boat.hpp"
 #include "helpers/environment_map.hpp"
@@ -31,6 +32,7 @@ mesh terrain;
 mesh_drawable terrain_visual;
 mesh_drawable terrain_water;
 mesh_drawable terrain_berge_haut;
+mesh_drawable terrain_berge_milieu;
 mesh_drawable terrain_berge_bas;
 mesh_drawable terrain_herbe;
 mesh_drawable terrain_dune;
@@ -44,6 +46,7 @@ mesh_drawable cube_map;
 
 mesh_drawable pyramid;
 mesh_drawable palm_tree;
+mesh_drawable column;
 hierarchy_mesh_drawable bird;
 mesh_drawable boat;
 mesh_drawable fern;
@@ -138,9 +141,10 @@ void initialize_data()
     terrain_herbe = mesh_drawable(terrain);
     terrain_water = mesh_drawable(terrain, shader_environment_map, texture_cubemap);
     terrain_berge_bas = mesh_drawable(terrain);
+    terrain_berge_milieu = mesh_drawable(terrain);
     terrain_berge_haut = mesh_drawable(terrain);
     terrain_dune = mesh_drawable(terrain);
-    update_terrain(terrain,terrain_herbe,terrain_berge_bas, terrain_berge_haut,terrain_dune,terrain_water, parameters, t);
+    update_terrain(terrain,terrain_herbe,terrain_berge_bas, terrain_berge_milieu, terrain_berge_haut,terrain_dune,terrain_water, parameters, t);
 
     // Texture Images load and association
     terrain_dune.texture = texture("pictures/texture_sable.png");
@@ -151,6 +155,9 @@ void initialize_data()
 
 	// Palm tree
 	initialize_palm_tree(palm_tree, 4.0f);
+
+    // column
+    initialize_column_cyl(column, 4.0f);
 
 	// Bird
 	initialize_bird(bird, 1.0f);
@@ -209,6 +216,7 @@ void display_frame()
     draw_with_cubemap(terrain_water, scene);
     draw(pyramid, scene);
     draw(palm_tree, scene);
+    draw(column, scene);
     draw(bird, scene);
     draw(boat, scene);
     draw(fern, scene);

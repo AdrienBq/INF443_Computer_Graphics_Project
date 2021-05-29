@@ -13,8 +13,9 @@ courbes_fleuve[1] = positions_riveD; // ranges abscisses decroissants
 courbes_fleuve[2] = positions_ile; // ranges abscisses croissants
 **/
 
-float taille_berge1 = 0.1;
-float taille_berge2 = 0.3;
+float taille_berge1 = 0.15;
+float taille_berge2 = 0.4;
+float taille_berge3 = 0.7;
 
 vcl::mesh initialize_terrain()
 {
@@ -154,13 +155,14 @@ void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perl
 
 }
 
-void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual1, vcl::mesh_drawable& terrain_visual2, vcl::mesh_drawable& terrain_visual3, vcl::mesh_drawable& terrain_visual4, vcl::mesh_drawable& terrain_visual5, perlin_noise_parameters const& parameters, float t)
+void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual1, vcl::mesh_drawable& terrain_visual2, vcl::mesh_drawable& terrain_visual3, vcl::mesh_drawable& terrain_visual4, vcl::mesh_drawable& terrain_visual5, vcl::mesh_drawable& terrain_visual6, perlin_noise_parameters const& parameters, float t)
 {
     update_terrain_herbe(terrain, terrain_visual1, parameters);
     update_terrain_berge_bas(terrain, terrain_visual2, parameters);
-    update_terrain_berge_haut(terrain, terrain_visual3, parameters);
-    update_terrain_dune(terrain, terrain_visual4, parameters);
-    update_terrain_water(terrain, terrain_visual5, parameters, t);
+    update_terrain_berge_milieu(terrain, terrain_visual3, parameters);
+    update_terrain_berge_haut(terrain, terrain_visual4, parameters);
+    update_terrain_dune(terrain, terrain_visual5, parameters);
+    update_terrain_water(terrain, terrain_visual6, parameters, t);
 }
 
 void update_terrain_water(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters, float t)
@@ -246,10 +248,49 @@ void update_terrain_berge_bas(vcl::mesh& terrain, vcl::mesh_drawable& terrain_vi
             if (!is_water(terrain.position[idx].x,terrain.position[idx].y)
                     && is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge1)){
                 // use the noise as height value
-                terrain.position[idx].z = parameters.terrain_height*noise*0.5;
+                terrain.position[idx].z = parameters.terrain_height*noise*0.3;
                 // use noise as color value
                 terrain.color[idx] = vec3(0.31f,0.17f,0.04f)+0.5f*noise*vec3(1,1,1);
             }
+        }
+    }
+
+    // Update the normal of the mesh structure
+    terrain.compute_normal();
+
+    // Update step: Allows to update a mesh_drawable without creating a new one
+    terrain_visual.update_position(terrain.position);
+    terrain_visual.update_normal(terrain.normal);
+    terrain_visual.update_color(terrain.color);
+}
+
+void update_terrain_berge_milieu(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters)
+{
+    // Number of samples in each direction (assuming a square grid)
+    int const N = std::sqrt(terrain.position.size());
+
+    // Recompute the new vertices
+    for (int ku = 0; ku < N; ++ku) {
+        for (int kv = 0; kv < N; ++kv) {
+
+            // Compute local parametric coordinates (u,v) \in [0,1]
+            const float u = ku/(N-1.0f);
+            const float v = kv/(N-1.0f);
+
+            int const idx = ku*N+kv;
+
+            // Compute the Perlin noise
+            float const noise = noise_perlin({u, v}, parameters.octave, parameters.persistency, parameters.frequency_gain);
+
+            if (!is_water(terrain.position[idx].x,terrain.position[idx].y)
+                    && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge1)
+                    && is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge2)){
+                // use the noise as height value
+                terrain.position[idx].z = parameters.terrain_height*noise*0.6;
+                // use noise as color value
+                terrain.color[idx] = vec3(0.34f,0.16f,0.0f)+0.5f*noise*vec3(1,1,1);
+            }
+
         }
     }
 
@@ -282,7 +323,8 @@ void update_terrain_berge_haut(vcl::mesh& terrain, vcl::mesh_drawable& terrain_v
 
             if (!is_water(terrain.position[idx].x,terrain.position[idx].y)
                     && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge1)
-                    && is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge2)){
+                    && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge2)
+                    && is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge3)){
                 // use the noise as height value
                 terrain.position[idx].z = parameters.terrain_height*noise;
                 // use noise as color value
@@ -322,6 +364,7 @@ void update_terrain_herbe(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual
             if(!is_water(terrain.position[idx].x,terrain.position[idx].y)
                      && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge1)
                      && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge2)
+                     && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge3)
                      && !is_dune(terrain.position[idx].x,terrain.position[idx].y) )
             {
                 // use also the noise as color value
@@ -458,6 +501,7 @@ bool is_water_perlin(float x, float y, float noise)
 
 bool is_berge(float x, float y, float taille_berge)
 {
+
     if(y> -10 && x < rive_gauche(y) - taille_berge) return false;
     else if(x<0.5 && y < ile(x) - taille_berge) return false;
     else if(y>-10.5 && y<4.5 && x > rive_droite(y) + taille_berge) return false;
