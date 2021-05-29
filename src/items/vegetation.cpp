@@ -116,24 +116,122 @@ void initialize_palm_tree(vcl::mesh_drawable& palm_tree, float size)
 
 
 
-vcl::mesh create_leaf(float length, float max_width)
+vcl::mesh create_leaf(float radius, float width, int N)
 {
-    // TO DO
-    return vcl::mesh_primitive_arrow();
+    mesh leaf;
+    leaf.position.resize(2 * N);
+    double alpha = std::acos(1 - width / (2 * radius));
+    double beta = 2 * alpha / N;
+    float x = 0.0f, y = 0.0f;
+    // k = 0
+    leaf.position[0] = { 0.0f, -radius * std::sin(alpha), 0.0f };
+    for (int k = 1; k < N; k++) {
+        x = radius * std::cos(-alpha + k * beta);
+        y = radius * std::sin(-alpha + k * beta);
+        leaf.position[k] = { width / 2 - radius + x, y, -k*k*radius/50000 };
+        leaf.position[N + k] = { radius - width / 2 - x, y, -k * k * radius / 50000 };
+    }
+    // k = N
+    leaf.position[N] = { 0.0f, radius * std::sin(alpha), -N * N * radius / 50000 };
+    translate_leaf(leaf, { 0.0f, 0.0f, 0.0f });
+    return leaf;
 }
 
 
-void rule_leaf(std::vector<vcl::mesh> &list_leafs, int N)
+void rotate_leaf(vcl::mesh &leaf, float alpha, int axis)
 {
-    // TO DO
+    assert(axis >= 0 && axis <= 2);
+    mat3 M;
+    if (axis == 0) {
+        M = { 1.0f, 0.0f, 0.0f,
+              0.0f, std::cos(alpha), -std::sin(alpha),
+              0.0f, std::sin(alpha), std::cos(alpha) };
+    }
+    else if (axis == 1) {
+        M = { std::cos(alpha), 0.0f, std::sin(alpha),
+              0.0f, 1.0f, 0.0f,
+              -std::sin(alpha), 0.0f, std::cos(alpha) };
+    }
+    else { // axis == 2
+        M = { std::cos(alpha), -std::sin(alpha), 0.0f,
+              std::sin(alpha), std::cos(alpha), 0.0f,
+              0.0f, 0.0f, 1.0f };
+    }
+    for (int i = 0; i < leaf.position.size(); i++) {
+        leaf.position[i] = M * leaf.position[i];
+    }
 }
 
 
-void rule_trunk(std::vector<vcl::mesh> &list_trunks, std::vector<vcl::vec3> list_centers, float r, float h, int N)
+void translate_leaf(vcl::mesh &leaf, vcl::vec3 p0)
+{
+    vec3 d = p0 - leaf.position[0];
+    for (int i = 0; i < leaf.position.size(); i++) {
+        leaf.position[i] += d;
+    }
+}
+
+
+void rule_leaf(std::vector<vcl::mesh>& list_leafs, float r, float w, std::vector<float> list_alphas)
+{
+    const int resolution = 50;
+    const int nb = 20; // number of leafs on each side of the former leaf
+    const int moy = nb / 2;
+    int s = list_leafs.size();
+    int N = list_leafs[0].position.size() / 2;
+    int pas = (N - 1) / nb;
+    vcl::vec3 p0;
+    for (int i = 0; i < s; i++) {
+        float alphaR = list_alphas[0] - 3.14f / 2;
+        float alphaL = list_alphas[0] + 3.14f / 2;
+        for (int j = 1; j < nb + 1; j++) {
+            p0 = (list_leafs[0].position[j * pas] + list_leafs[0].position[N + j * pas]) / 2;
+
+            // Right
+            mesh leaf = create_leaf(vcl::norm(list_leafs[0].position[j * pas] - p0), w, resolution);
+            rotate_leaf(leaf, alphaR);
+            translate_leaf(leaf, p0);
+            list_leafs.push_back(leaf);
+            list_alphas.push_back(alphaR);
+
+            // Left
+            leaf = create_leaf(vcl::norm(list_leafs[0].position[j * pas] - p0), w, resolution);
+            rotate_leaf(leaf, alphaL);
+            translate_leaf(leaf, p0);
+            list_leafs.push_back(leaf);
+            list_alphas.push_back(alphaL);
+        }
+
+        // Last leaf
+        /*mesh leaf = create_leaf(r, w, resolution);
+        rotate_leaf(leaf, list_alphas[0]);
+        translate_leaf(leaf, p0);
+        list_leafs.push_back(leaf);
+        list_alphas.push_back(list_alphas[0]);*/
+
+        list_leafs.erase(list_leafs.begin());
+        list_alphas.erase(list_alphas.begin());
+    }
+}
+
+
+void leaf_to_triangles(vcl::mesh& leaf)
+{
+    int N = leaf.position.size() / 2;
+    for (int i = 1; i < N - 1; i++) {
+        leaf.connectivity.push_back({ i, i + 1, N + i });
+        leaf.connectivity.push_back({ N + i, i + 1, N + i + 1 });
+    }
+    leaf.connectivity.push_back({ 0, 1, N + 1 });
+    leaf.connectivity.push_back({ N - 1, N, 2 * N - 1 });
+    leaf.fill_empty_field();
+}
+
+
+void rule_trunk(std::vector<vcl::mesh> &list_trunks, std::vector<vcl::vec3> list_centers, float r, float h)
 {
     int s = list_trunks.size();
     for (int i = 0; i < s; i++) {
-        // TO DO
         mesh trunk = create_tree_trunk_cylinder(r, h);
         int p = trunk.position.size();
         for (int k = 0; k < p; k++) {
@@ -157,30 +255,37 @@ void rule_trunk(std::vector<vcl::mesh> &list_trunks, std::vector<vcl::vec3> list
 }
 
 
-void leaf_to_triangles(vcl::mesh &leaf, int N)
-{
-    // TO DO
-}
-
-
-vcl::mesh create_fern(float length, float max_width, float radius, float height, int detail_level, int N_leafs)
+vcl::mesh create_fern(float leaf_radius, float leaf_width, float trunk_radius, float trunk_height, int detail_level, int N_leafs)
 {
     const unsigned int N = 100;
     std::vector<vcl::mesh> list_leafs, list_trunks;
     std::vector<vcl::vec3> list_centers;
-    list_trunks.push_back(create_tree_trunk_cylinder(radius, height));
+    std::vector<float> list_alphas;
+    list_trunks.push_back(create_tree_trunk_cylinder(trunk_radius, trunk_height));
     list_centers.push_back(vec3(0.0f, 0.0f, 0.0f));
+    for (int l = 0; l < N_leafs; l++) {
+        list_leafs.push_back(create_leaf(leaf_radius, leaf_width, N));
+        translate_leaf(list_leafs[l], { 0.0f, 0.0f, trunk_height - 0.01f });
+        rotate_leaf(list_leafs[l], static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (3.14f / 4))), 0);
+        float alpha = 2 * l * 3.14f / N_leafs;
+        rotate_leaf(list_leafs[l], alpha);
+        list_alphas.push_back(alpha);
+    }
     for (int i = 0; i < detail_level; i++) {
-        radius /= 3;
-        rule_leaf(list_leafs, N);
-        rule_trunk(list_trunks, list_centers, radius, height, N);  
+        trunk_radius /= 3;
+        leaf_radius /= 5;
+        leaf_width /= 5;
+        rule_leaf(list_leafs, leaf_radius, leaf_width, list_alphas);
+        rule_trunk(list_trunks, list_centers, trunk_radius, trunk_height);  
     }
     vcl::mesh fern;
     for (auto leaf : list_leafs) {
-        leaf_to_triangles(leaf, N);
+        leaf_to_triangles(leaf);
+        leaf.color.fill({ 0.0f, 1.0f, 0.0f });
         fern.push_back(leaf);
     }
     for (auto trunk : list_trunks) {
+        trunk.color.fill({ 196.0 / 255, 128.0 / 255, 77.0 / 255 });
         fern.push_back(trunk);
     }
     fern.fill_empty_field();
