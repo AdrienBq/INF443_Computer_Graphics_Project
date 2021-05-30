@@ -57,8 +57,6 @@ vcl::buffer<vcl::vec3> vitesses;
 vcl::buffer<float> L0_array;
 vcl::buffer<float> raideurs;
 vec3 pos_poteau;
-mesh boat_mesh;
-mesh_drawable boat_attached;
 mesh_drawable sphere;
 
 
@@ -179,10 +177,8 @@ void initialize_data()
     // Fern
     initialize_fern(fern, 1.0f);
 
-    boat_mesh = create_boat(1.0f * 7.0f, 1.0f * 2.0f, 1.0f * 1.0f);
-    initialize_boat(boat_mesh, boat_attached);
     pos_poteau = {4.0f,-6.0f,evaluate_terrain2(-1.0/16+0.5f,-13.0/30+0.5, terrain)[2]+0.1f};
-    //initialize_corde(get_boat_pos(boat_mesh),pos_poteau, particules, vitesses, L0_array, raideurs);
+    //initialize_corde(boat.transform.translate,pos_poteau, particules, vitesses, L0_array, raideurs);
     //sphere = mesh_drawable( mesh_primitive_sphere(0.05f));
 }
 

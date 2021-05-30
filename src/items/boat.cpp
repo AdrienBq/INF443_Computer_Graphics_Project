@@ -44,22 +44,8 @@ void initialize_boat(vcl::mesh_drawable& boat, float size)
 	boat.shading.color = { 196.0 / 255, 128.0 / 255, 77.0/255 };
 	boat.transform.translate.z = 0.2f;
 }
-void initialize_boat(vcl::mesh& boat_mesh, vcl::mesh_drawable& boat)
-{
-    boat = vcl::mesh_drawable(boat_mesh);
-    boat.shading.color = { 196.0 / 255, 128.0 / 255, 77.0/255 };
-    boat.transform.translate.z = 0.2f;
-    boat.transform.translate.x = 4.0f;
-    boat.transform.translate.y = -12.0f;
-}
-
 
 void update_pos_boat(vcl::mesh_drawable& boat, float t)
 {
     boat.transform.translate.x += std::sin(t);
-}
-
-vcl::vec3 get_boat_pos(vcl::mesh& boat)
-{
-    return boat.position[0];
 }
