@@ -19,5 +19,5 @@ vcl::hierarchy_mesh_drawable create_bird(bird_parameters &parameters, float size
 void initialize_bird(vcl::hierarchy_mesh_drawable& bird, float size);
 void initialize_leader_bird(vcl::hierarchy_mesh_drawable& bird, float size, vcl::buffer<vcl::vec3> &key_positions, vcl::buffer<float> &key_times);
 void update_bird(vcl::hierarchy_mesh_drawable& bird, vcl::vec3 position, float t);
-void update_leader_bird(vcl::hierarchy_mesh_drawable& bird, float t, vcl::buffer<vcl::vec3> &key_positions, vcl::buffer<float> &key_times);
+void update_leader_bird(vcl::hierarchy_mesh_drawable& bird, float t, float dt, vcl::buffer<vcl::vec3>& key_positions, vcl::buffer<float>& key_times, vcl::buffer<vcl::vec3>& speeds);
 void update_follower_birds(vcl::hierarchy_mesh_drawable& leader, vcl::buffer<vcl::vec3>& followers, vcl::buffer<vcl::vec3>& speeds, float t, float dt, float k_attr, float k_rep, float k_frott);

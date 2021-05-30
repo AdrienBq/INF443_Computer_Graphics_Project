@@ -183,6 +183,7 @@ void initialize_data()
 		follower_birds.push_back(key_positions_bird[0] + 1.0f*vec3(static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)), static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)), static_cast <float> (rand()) / (static_cast <float> (RAND_MAX))));
 		speeds_birds.push_back({ 0.1f, 0.1f, 0.1f });
 	}
+	speeds_birds.push_back({ 0.1f, 0.1f, 0.1f });
 
     // Boat
     initialize_boat(boat, 1.0f);
@@ -251,9 +252,9 @@ void display_frame()
 	vcl::draw(palm_tree, scene);
 	vcl::draw(column, scene);
 
-	update_leader_bird(bird, t, key_positions_bird, key_times_bird);
+	update_leader_bird(bird, t, dt, key_positions_bird, key_times_bird, speeds_birds);
 	vcl::draw(bird, scene);
-	update_follower_birds(bird, follower_birds, speeds_birds, t, dt, 0.0001f, 0.0001f, 0.0005f);
+	update_follower_birds(bird, follower_birds, speeds_birds, t, dt, 0.0001f, 0.0001f, 0.005f);
 	for (auto pos : follower_birds) {
 		bird["body"].transform.translate = pos;
 		bird.update_local_to_global_coordinates();

@@ -120,10 +120,11 @@ void update_bird(vcl::hierarchy_mesh_drawable &bird, vcl::vec3 position, float t
 }
 
 
-void update_leader_bird(vcl::hierarchy_mesh_drawable& bird, float t, vcl::buffer<vcl::vec3>& key_positions, vcl::buffer<float>& key_times) {
+void update_leader_bird(vcl::hierarchy_mesh_drawable& bird, float t, float dt, vcl::buffer<vcl::vec3>& key_positions, vcl::buffer<float>& key_times, vcl::buffer<vcl::vec3> &speeds) {
 	// INTERPOLATION
 	// Compute the interpolated position
 	vec3 const p = interpolation(t, key_positions, key_times);
+	speeds[speeds.size() - 1] = (p - bird["body"].transform.translate) / dt;
 	update_bird(bird, p, t);
 }
 
@@ -133,6 +134,7 @@ void update_follower_birds(vcl::hierarchy_mesh_drawable& leader, vcl::buffer<vcl
 	// SIMULATION
 	vec3 force, dir;
 	float dist;
+	const float max_dist = 1.0f;
 	int nb = followers.size();
 	for (int i = 0; i < nb; i++) {
 		force  = { 0, 0, 0 };
@@ -141,13 +143,17 @@ void update_follower_birds(vcl::hierarchy_mesh_drawable& leader, vcl::buffer<vcl
 			dir = followers[j] - followers[i];
 			dist = norm(dir);
 			dir /= dist;
-			force += k_attr * dist * dist * dir / nb - k_rep * dir / (dist * dist) / nb - k_frott * (speeds[i] - speeds[j]) / nb;
+			force += /*k_attr * dist * dist * dir / nb*/ - k_rep * dir / (dist * dist) / nb - k_frott * (speeds[i] - speeds[j]) / nb;
 		}
 		dir = leader["body"].transform.translate - followers[i];
 		dist = norm(dir);
 		dir /= dist;
-		force += 10*k_attr * dist * dist * dir - k_rep * dir / (dist * dist);
+		force += 1000000*k_attr * dist * dist * dir - k_rep * dir / (dist * dist) - k_frott * (speeds[i] - speeds[nb]);
 		speeds[i] += dt * force;
 		followers[i] = followers[i] + dt * speeds[i];
+		dir = leader["body"].transform.translate - followers[i];
+		dist = norm(dir);
+		if (dist > max_dist && dot(speeds[i], speeds[nb]) < 0)
+			speeds[i] /= norm(speeds[i]);
 	}
 }
