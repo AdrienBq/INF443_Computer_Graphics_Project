@@ -46,7 +46,7 @@ float t = 0;
 mesh_drawable cube_map;
 
 mesh_drawable pyramid;
-mesh_drawable palm_tree;
+hierarchy_mesh_drawable palm_tree;
 mesh_drawable column;
 hierarchy_mesh_drawable bird;
 mesh_drawable boat;

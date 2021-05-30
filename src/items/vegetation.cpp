@@ -9,6 +9,7 @@ mesh create_tree_trunk_cylinder(float radius, float height)
     mesh m;
     const unsigned int N = 100;
     m.position.resize(N);
+    m.uv.resize(N);
 
     float z = height;
     float x = 0.0f;
@@ -20,6 +21,7 @@ mesh create_tree_trunk_cylinder(float radius, float height)
             y = radius * std::sin(2 * 3.14f * i / N);
         }
         m.position[i] = { x, y, z };
+        m.uv[i] = { 20 * i % N / N, z / height };
     }
 
     for (int i = 0; i < N - 2; i++) {
@@ -46,17 +48,23 @@ mesh create_palm_leaf(float width, float m, vec3 v_0, float t_max, unsigned int 
 {
     mesh leaf;
     leaf.position.resize(3*N + 2);
+    leaf.uv.resize(3 * N + 2);
     double dt = t_max / N;
     vec3 g = { 0.0f, 0.0f, -9.81f / m };
     float norm = v_0.x * v_0.x + v_0.y * v_0.y + v_0.z * v_0.z;
     vec3 dir_width = { - v_0.y / norm, v_0.x / norm, 0.0f };
     double t = 0.0;
     leaf.position[0] = { 0.0f, 0.0f, 0.0f };
+    leaf.uv[0] = { 0.5f, 0.0f };
     for (int i = 2; i < 3 * N + 1; i += 3) {
         t += dt;
+        float v = i / N;
         leaf.position[i] = t * v_0 + 0.5f * t * t * g;
+        leaf.uv[i] = { 0.5f, v };
         leaf.position[i - 1] = leaf.position[i] - (width / 2) * dir_width;
+        leaf.uv[i - 1] = { 0.0f, v };
         leaf.position[i + 1] = leaf.position[i] + (width / 2) * dir_width;
+        leaf.uv[i + 1] = { 1.0f, v };
     }
     t += dt;
     leaf.position[3 * N + 1] = t * v_0 + 0.5f * t * t * g;
@@ -78,7 +86,7 @@ mesh create_palm_leaf(float width, float m, vec3 v_0, float t_max, unsigned int 
 
 
 
-vcl::mesh create_palm_tree(float size, int N_leafs, float spreading)
+vcl::hierarchy_mesh_drawable create_palm_tree(float size, int N_leafs, float spreading)
 {
     float const h = size * 4.0f; // trunk height
     float const r = size * 4.0f / 30; // trunk radius
@@ -88,11 +96,11 @@ vcl::mesh create_palm_tree(float size, int N_leafs, float spreading)
 
     // Trunk
     mesh trunk = create_tree_trunk_cylinder(r, h);
-    trunk.color.fill({ 0.4f, 0.3f, 0.3f });
+    //trunk.color.fill({ 0.4f, 0.3f, 0.3f });
 
     // Fruits
     mesh fruits = mesh_primitive_ellipsoid({ size * 0.2f, size * 0.2f, size * 0.3f }, { 0.0f, 0.0f, h - size * 0.3f / 2 });
-    fruits.color.fill({ 1.0f, 1.0f, 0.0f });
+    //fruits.color.fill({ 1.0f, 1.0f, 0.0f });
 
     // Foliage
     float da = 2 * 3.14 / N_leafs;
@@ -101,21 +109,42 @@ vcl::mesh create_palm_tree(float size, int N_leafs, float spreading)
         foliage.push_back(create_palm_leaf(width, m, { spreading * std::cos(i * da), spreading * std::sin(i * da), 1.0f }, t_max));
     }
     foliage.position += { 0.0f, 0.0f, h }; // place foliage at the top of the trunk
-    foliage.color.fill({ 0.0f, 1.0f, 0.0f });
+    //foliage.color.fill({ 0.0f, 1.0f, 0.0f });
 
     // Tree
-    mesh tree = trunk;
-    tree.push_back(fruits);
-    tree.push_back(foliage);
+    hierarchy_mesh_drawable tree;
+    tree.add(mesh_drawable(trunk), "trunk");
+    tree.add(mesh_drawable(fruits), "fruits", "trunk");
+    tree.add(mesh_drawable(foliage), "foliage", "trunk");
 
     return tree;
 }
 
 
-void initialize_palm_tree(vcl::mesh_drawable& palm_tree, float size)
+void initialize_palm_tree(vcl::hierarchy_mesh_drawable& palm_tree, float size)
 {
-    palm_tree = mesh_drawable(create_palm_tree(size));
-    palm_tree.transform.translate.x = 4.0f;
+    palm_tree = create_palm_tree(size);
+    palm_tree["trunk"].transform.translate.x = 4.0f;
+    palm_tree.update_local_to_global_coordinates();
+
+    // Load an image from a file
+    image_raw const im_trunk = image_load_png("pictures/texture_trunk_palm_tree.png");
+    image_raw const im_leaf = image_load_png("pictures/texture_palm_leaf.png");
+    //image_raw const im_fruits = image_load_png("pictures/texture_palm_fruits.png");
+
+    // Send this image to the GPU, and get its identifier texture_image_id
+    GLuint const texture_image_id_trunk = opengl_texture_to_gpu(im_trunk,
+        GL_MIRRORED_REPEAT /*GL_CLAMP_TO_EDGE*/ /**GL_TEXTURE_WRAP_S*/,
+        GL_MIRRORED_REPEAT /*GL_CLAMP_TO_EDGE*/ /**GL_TEXTURE_WRAP_T*/);
+    GLuint const texture_image_id_leaf = opengl_texture_to_gpu(im_leaf,
+        GL_MIRRORED_REPEAT /*GL_CLAMP_TO_EDGE*/ /**GL_TEXTURE_WRAP_S*/,
+        GL_MIRRORED_REPEAT /*GL_CLAMP_TO_EDGE*/ /**GL_TEXTURE_WRAP_T*/);
+
+    // Associate the texture_image_id to the image texture used when displaying visual
+    palm_tree["trunk"].element.texture = texture_image_id_trunk;
+    palm_tree["foliage"].element.texture = texture_image_id_leaf;
+    palm_tree["fruits"].element.texture = texture_image_id_trunk;
+
 }
 
 
