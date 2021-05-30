@@ -295,6 +295,6 @@ vcl::mesh create_fern(float leaf_radius, float leaf_width, float trunk_radius, f
 
 void initialize_fern(vcl::mesh_drawable& fern, float size)
 {
-    fern = mesh_drawable(create_fern(1.0f, 0.3f, 0.3f, 0.2f, 2));
+    fern = mesh_drawable(create_fern(1.0f, 0.3f, 0.1f, 0.03f, 2));
     fern.transform.translate.z = 0.4f;
 }
