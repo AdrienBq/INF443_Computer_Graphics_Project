@@ -8,7 +8,7 @@
 #include "items/columns.hpp"
 #include "items/bird.hpp"
 #include "items/boat.hpp"
-//#include "items/corde.hpp"
+#include "items/corde.hpp"
 #include "helpers/environment_map.hpp"
 
 
@@ -160,7 +160,7 @@ void initialize_data()
     terrain_berge_milieu = mesh_drawable(terrain);
     terrain_berge_haut = mesh_drawable(terrain);
     terrain_dune = mesh_drawable(terrain);
-    update_terrain(terrain,terrain_herbe,terrain_berge_bas, terrain_berge_milieu, terrain_berge_haut,terrain_dune,terrain_water, parameters, t);
+    update_terrain(terrain,terrain_herbe,terrain_berge_bas, terrain_berge_milieu, terrain_berge_haut,terrain_dune,terrain_water, parameters, t, timer.t_max);
 
     // Texture Images load and association
     terrain_dune.texture = texture("pictures/texture_sable.png");
@@ -190,8 +190,8 @@ void initialize_data()
     initialize_fern(fern, 1.0f);
 
     pos_poteau = {4.0f,-6.0f,evaluate_terrain2(-1.0/16+0.5f,-13.0/30+0.5, terrain)[2]+0.1f};
-    //initialize_corde(boat.transform.translate,pos_poteau, particules, vitesses, L0_array, raideurs);
-    //sphere = mesh_drawable( mesh_primitive_sphere(0.05f));
+    initialize_corde(boat.transform.translate,pos_poteau, particules, vitesses, L0_array, raideurs);
+    sphere = mesh_drawable( mesh_primitive_sphere(0.05f));
 
 	// Set timer bounds
 	//  You should adapt these extremal values to the type of interpolation
@@ -208,9 +208,9 @@ void display_frame()
 	// Update the current time
 	float t_prev = t;
     timer.update();
-    timer.scale = 0.02f; // 0.02f
+    //timer.scale = 0.02f; // 0.02f
     t = timer.t;
-    float dt = timer.scale;
+    float dt = timer.scale*0.01;
 
     ImGui::Checkbox("Frame", &user.gui.display_frame);
     ImGui::Checkbox("Wireframe", &user.gui.display_wireframe);
@@ -226,13 +226,11 @@ void display_frame()
         update_terrain_berge_bas(terrain, terrain_berge_bas, parameters);
         update_terrain_berge_haut(terrain, terrain_berge_haut, parameters);
         update_terrain_dune(terrain, terrain_dune, parameters);
-        update_terrain_water(terrain, terrain_water, parameters, t);
+        update_terrain_water(terrain, terrain_water, parameters, t, timer.t_max);
         //update_terrain(terrain, terrain_visual, parameters);
     }
 
-    update_terrain_water(terrain, terrain_water, parameters, t);
-    //update_pos_boat(boat_attached, t);
-    //update_pos_rope(particules,vitesses,L0_array,raideurs,terrain,dt);
+    update_terrain_water(terrain, terrain_water, parameters, t, timer.t_max);
 
     glDepthMask(GL_FALSE);
     draw_with_cubemap(cube_map, scene);
@@ -259,10 +257,17 @@ void display_frame()
 	}
 
 
-	vcl::draw(boat, scene);
-	vcl::draw(boat_attached, scene);
-
+    //vcl::draw(boat, scene);
 	vcl::draw(fern, scene);
+
+    update_pos_boat(boat, t);
+    update_pos_rope(boat.transform.translate, particules,vitesses,L0_array,raideurs,terrain,dt);
+    vcl::draw(boat, scene);
+    sphere.shading.color = {1,1,1};
+    for(int i=0; i<10; i++){
+        sphere.transform.translate = particules[i];
+        draw(sphere, scene);
+    }
 }
 
 

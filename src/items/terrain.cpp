@@ -155,17 +155,18 @@ void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perl
 
 }
 
-void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual1, vcl::mesh_drawable& terrain_visual2, vcl::mesh_drawable& terrain_visual3, vcl::mesh_drawable& terrain_visual4, vcl::mesh_drawable& terrain_visual5, vcl::mesh_drawable& terrain_visual6, perlin_noise_parameters const& parameters, float t)
+void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual1, vcl::mesh_drawable& terrain_visual2, vcl::mesh_drawable& terrain_visual3, vcl::mesh_drawable& terrain_visual4, vcl::mesh_drawable& terrain_visual5, vcl::mesh_drawable& terrain_visual6, perlin_noise_parameters const& parameters, float t, float tmax)
 {
     update_terrain_herbe(terrain, terrain_visual1, parameters);
+    update_terrain_rive_droite(terrain, terrain_visual1, parameters);
     update_terrain_berge_bas(terrain, terrain_visual2, parameters);
     update_terrain_berge_milieu(terrain, terrain_visual3, parameters);
     update_terrain_berge_haut(terrain, terrain_visual4, parameters);
     update_terrain_dune(terrain, terrain_visual5, parameters);
-    update_terrain_water(terrain, terrain_visual6, parameters, t);
+    update_terrain_water(terrain, terrain_visual6, parameters, t, tmax);
 }
 
-void update_terrain_water(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters, float t)
+void update_terrain_water(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters, float t, float tmax)
 {
     // Number of samples in each direction (assuming a square grid)
     int const N = std::sqrt(terrain.position.size());
@@ -182,7 +183,7 @@ void update_terrain_water(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual
 
             // Compute the Perlin noise
             //float const noise1 = noise_perlin({u, v}, parameters.octave, parameters.persistency, parameters.frequency_gain);
-            float const noise2 = noise_perlin({u, v}, 6.0f, 0.6f, 2.25 - 0.3*sin(pi/2 + pi*t));
+            float const noise2 = noise_perlin({u, v}, 6.0f, 0.6f, 2.25 - 0.3*sin(pi/2 + pi*t/tmax));
 
             if(is_water(terrain.position[idx].x,terrain.position[idx].y)){
                 terrain.position[idx].z = parameters.terrain_height*0.2f*noise2;
@@ -365,10 +366,51 @@ void update_terrain_herbe(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual
                      && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge1)
                      && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge2)
                      && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge3)
-                     && !is_dune(terrain.position[idx].x,terrain.position[idx].y) )
+                     && !is_dune(terrain.position[idx].x,terrain.position[idx].y)
+                     && !is_rive_droite(terrain.position[idx].x,terrain.position[idx].y) )
             {
                 // use also the noise as color value
                 terrain.color[idx] = 0.3f*vec3(0,0.5f,0)+0.7f*noise*vec3(1,1,1);
+                // use the noise as height value
+                terrain.position[idx].z = parameters.terrain_height*noise + evaluate_dune(terrain.position[idx].x,terrain.position[idx].y, parameters.terrain_height);
+            }
+        }
+    }
+
+    // Update the normal of the mesh structure
+    terrain.compute_normal();
+
+    // Update step: Allows to update a mesh_drawable without creating a new one
+    terrain_visual.update_position(terrain.position);
+    terrain_visual.update_normal(terrain.normal);
+    terrain_visual.update_color(terrain.color);
+}
+
+void update_terrain_rive_droite(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters)
+{
+    // Number of samples in each direction (assuming a square grid)
+    int const N = std::sqrt(terrain.position.size());
+
+    // Recompute the new vertices
+    for (int ku = 0; ku < N; ++ku) {
+        for (int kv = 0; kv < N; ++kv) {
+
+            // Compute local parametric coordinates (u,v) \in [0,1]
+            const float u = ku/(N-1.0f);
+            const float v = kv/(N-1.0f);
+
+            int const idx = ku*N+kv;
+
+            // Compute the Perlin noise
+            float const noise = noise_perlin({u, v}, parameters.octave, parameters.persistency, parameters.frequency_gain);
+
+            if(!is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge1)
+                     && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge2)
+                     && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge3)
+                     && is_rive_droite(terrain.position[idx].x,terrain.position[idx].y) )
+            {
+                // use also the noise as color value
+                terrain.color[idx] = 0.3f*vec3(0.76f,0.7f,0.5f)+0.7f*noise*vec3(1,1,1);
                 // use the noise as height value
                 terrain.position[idx].z = parameters.terrain_height*noise + evaluate_dune(terrain.position[idx].x,terrain.position[idx].y, parameters.terrain_height);
             }
@@ -538,6 +580,12 @@ bool is_dune(float x, float y)
     return false;
 }
 
+bool is_rive_droite(float x, float y)
+{
+    if(y>-10.5 && y<4.5 && x > rive_droite(y)) return true;
+    return false;
+}
+
 float evaluate_dune1(float x, float y, float height)
 {
     vec2 const d0 = {-8.5f, 14.5f};
@@ -656,4 +704,80 @@ GLuint texture(const std::string& filename)
         GL_MIRRORED_REPEAT /**GL_TEXTURE_WRAP_T*/);
     // Associate the texture_image_id to the image texture used when displaying visual
     return texture_image_id1;
+}
+
+std::vector<vcl::vec3> generate_positions_forêt(int N, vcl::mesh& terrain) // les N/2 premiers pour les arbres et les autres pour les fougères
+{
+    std::vector<vcl::vec3> tab;
+    int i = 0;
+    float dmin = 1.0f;
+    int it = 0;
+    int Max_it = 2*N;
+    bool b;
+    while(i<N && it < Max_it){
+        it++;
+        float u = rand_interval();
+        float v = rand_interval();
+        vec3 pos = evaluate_terrain2(u, v, terrain);
+        b = true;
+        float dist;
+
+        if(is_water(pos[0],pos[1])
+                || is_berge(pos[0],pos[1], taille_berge3)
+                || is_dune(pos[0],pos[1])
+                || is_rive_droite(pos[0],pos[1])
+                || pos[1] > 7.0f )
+            b = false;
+
+        if(b){
+            for(int j=0; j<i; j++){ //for(vec3 q : tab)
+                dist = sqrt((pos[0]-tab[j][0])*(pos[0]-tab[j][0]) + (pos[1]-tab[j][1])*(pos[1]-tab[j][1]) + (pos[2]-tab[j][2])*(pos[2]-tab[j][2]));
+                if(dist < dmin){
+                    b = false;
+                    break;
+                }
+            }
+        }
+
+        if(b) {
+            tab.push_back(pos);
+            i++;
+        }
+    }
+    return tab;
+}
+
+std::vector<vcl::vec3> generate_positions_pyramids(vcl::mesh& terrain, perlin_noise_parameters const& parameters)
+{
+    std::vector<vcl::vec3> tab;
+    tab.push_back({7.0f,-8.0f,evaluate_terrain2(7.0f/16+0.5f,-8.0f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
+    tab.push_back({3.0f,-7.0f,evaluate_terrain2(3.0f/16+0.5f,-7.0f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
+    tab.push_back({6.0f,0.0f,evaluate_terrain2(6.0f/16+0.5f,0.5f,terrain)[2]-parameters.terrain_height*0.5f});
+    tab.push_back({2.0f,9.0f,evaluate_terrain2(2.0f/16+0.5f,9.0f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
+    return tab;
+}
+
+std::vector<vcl::vec3> generate_positions_columns(vcl::mesh& terrain, perlin_noise_parameters const& parameters)
+{
+    std::vector<vcl::vec3> tab;
+    tab.push_back({-6.0f,6.3f,evaluate_terrain2(-6.0f/16+0.5f,6.3f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
+    tab.push_back({-5.0f,7.0f,evaluate_terrain2(-5.0f/16+0.5f,7.0f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
+    tab.push_back({-4.0f,7.7f,evaluate_terrain2(-4.0f/16+0.5f,7.7f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
+    tab.push_back({-3.0f,8.3f,evaluate_terrain2(-3.0f/16+0.5f,8.3f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
+    tab.push_back({-2.0f,9.0f,evaluate_terrain2(-2.0f/16+0.5f,9.0f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
+    tab.push_back({4.0f,8.5f,evaluate_terrain2(4.0f/16+0.5f,8.5f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
+    tab.push_back({5.0f,8.5f,evaluate_terrain2(5.0f/16+0.5f,8.5f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
+    tab.push_back({6.0f,8.5f,evaluate_terrain2(6.0f/16+0.5f,8.5f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
+    tab.push_back({4.0f,9.5f,evaluate_terrain2(4.0f/16+0.5f,9.5f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
+    tab.push_back({5.0f,9.5f,evaluate_terrain2(5.0f/16+0.5f,9.5f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
+    tab.push_back({6.0f,9.5f,evaluate_terrain2(6.0f/16+0.5f,9.5f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
+
+    return tab;
+}
+
+std::vector<vcl::vec3> generate_positions_obelix(vcl::mesh& terrain, perlin_noise_parameters const& parameters)
+{
+    std::vector<vcl::vec3> tab;
+    tab.push_back({-4.0f,-3.0f,evaluate_terrain2(-4.0f/16+0.5f,-3.0f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
+    return tab;
 }

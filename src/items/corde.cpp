@@ -4,6 +4,12 @@
 using namespace vcl;
 
 
+int NbrSpring = 10;
+float const m  = 0.1f;        // particle mass
+float const mu = 0.01f;       // damping coefficient
+vcl::vec3 const g   = {0,0,-9.81f}; // gravity
+
+
 vcl::vec3 spring_force(vcl::vec3 const& p_i, vcl::vec3 const& p_j, float L_0, float K)
 {
     float L = sqrt((p_i[0] - p_j[0])*(p_i[0] - p_j[0])
@@ -75,7 +81,7 @@ void initialize_corde(vcl::vec3 pos_bateau, vcl::vec3& pos_poteau, vcl::buffer<v
 
     raideurs = {};
     for(int i=0; i<NbrSpring; i++){
-        raideurs.push_back(30);
+        raideurs.push_back(1);
     }
 }
 

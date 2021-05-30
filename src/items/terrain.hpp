@@ -31,7 +31,7 @@ vcl::vec4 dunes(float x);
 bool is_water(float x, float y);
 bool is_water_perlin(float x, float y, float noise);
 bool is_water1(float x, float y, vcl::buffer<vcl::vec3> *courbes_fleuve);
-
+bool is_rive_droite(float x, float y);
 bool is_berge(float x, float y, float taille_berge);
 bool is_dune(float x, float y);
 float evaluate_dune(float x, float y, float height);
@@ -40,15 +40,19 @@ float evaluate_dune1(float x, float y, float height);
 // Recompute the vertices of the terrain everytime a parameter is modified
 //  and update the mesh_drawable accordingly
 void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters);
-void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual1, vcl::mesh_drawable& terrain_visual2, vcl::mesh_drawable& terrain_visual3, vcl::mesh_drawable& terrain_visual4, vcl::mesh_drawable& terrain_visual5, vcl::mesh_drawable& terrain_visual6, perlin_noise_parameters const& parameters, float t);
-void update_terrain_water(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters, float t);
+void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual1, vcl::mesh_drawable& terrain_visual2, vcl::mesh_drawable& terrain_visual3, vcl::mesh_drawable& terrain_visual4, vcl::mesh_drawable& terrain_visual5, vcl::mesh_drawable& terrain_visual6, perlin_noise_parameters const& parameters, float t, float tmax);
+void update_terrain_water(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters, float t, float tmax);
 void update_terrain_berge_bas(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters);
 void update_terrain_berge_milieu(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters);
 void update_terrain_berge_haut(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters);
 void update_terrain_herbe(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters);
+void update_terrain_rive_droite(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters);
 void update_terrain_dune(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters);
 
 GLuint texture(const std::string& filename);
 void rotate_terrain(vcl::mesh& cube, vcl::mesh_drawable& cube_visual);
 
-
+std::vector<vcl::vec3> generate_positions_forêt(int N, vcl::mesh& terrain);
+std::vector<vcl::vec3> generate_positions_pyramids(vcl::mesh& terrain, perlin_noise_parameters const& parameters);
+std::vector<vcl::vec3> generate_positions_columns(vcl::mesh& terrain, perlin_noise_parameters const& parameters);
+std::vector<vcl::vec3> generate_positions_obelix(vcl::mesh& terrain, perlin_noise_parameters const& parameters);

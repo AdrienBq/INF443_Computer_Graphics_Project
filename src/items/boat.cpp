@@ -66,5 +66,5 @@ void initialize_boat(vcl::mesh_drawable& boat, float size)
 
 void update_pos_boat(vcl::mesh_drawable& boat, float t)
 {
-    boat.transform.translate.x += std::sin(t);
+    boat.transform.translate = {4.0f+std::sin(2*pi*t),-12.0f,0.5f};
 }
