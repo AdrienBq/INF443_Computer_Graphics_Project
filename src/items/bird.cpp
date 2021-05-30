@@ -1,4 +1,5 @@
 #include "bird.hpp"
+#include "helpers/interpolation.hpp"
 
 using namespace vcl;
 
@@ -80,4 +81,79 @@ void initialize_bird(hierarchy_mesh_drawable& bird, float size)
 	bird = create_bird(default_bird, size);
 	bird["body"].transform.translate = { 3.0f, 0.0f, 5.0f };
 	bird.update_local_to_global_coordinates();
+}
+
+
+void initialize_leader_bird(vcl::hierarchy_mesh_drawable& bird, float size, vcl::buffer<vec3> &key_positions, vcl::buffer<float> &key_times)
+{
+	initialize_bird(bird, size);
+	key_positions.push_back(default_bird.key_positions);
+	key_times.push_back(default_bird.key_times);
+	bird["body"].transform.translate = key_positions[0];
+}
+
+
+void update_bird(vcl::hierarchy_mesh_drawable &bird, vcl::vec3 position, float t)
+{
+	/** *************************************************************  **/
+	/** Compute the (animated) transformations applied to the elements **/
+	/** *************************************************************  **/
+
+	bird["body"].transform.translate = position;
+
+
+	// The head oscillate along the z direction
+	//bird["head"].transform.translate = {0,0.01f*(1+std::sin(2*3.14f*t)),0};
+
+	// Rotation of the shoulder-left around the x axis
+	bird["shoulder_left"].transform.rotate = rotation({ 0,1,0 }, 0.5f * std::sin(2 * 3.14f * (t - 0.4f)));
+	// Rotation of the arm-left around the y axis (delayed with respect to the shoulder)
+	bird["arm_bottom_left"].transform.rotate = rotation({ 0,1,0 }, std::sin(2 * 3.14f * (t - 0.6f)));
+
+	// Rotation of the shoulder-right around the y axis
+	bird["shoulder_right"].transform.rotate = rotation({ 0,-1,0 }, 0.5f * std::sin(2 * 3.14f * (t - 0.4f)));
+	// Rotation of the arm-right around the y axis (delayed with respect to the shoulder)
+	bird["arm_bottom_right"].transform.rotate = rotation({ 0,-1,0 }, std::sin(2 * 3.14f * (t - 0.6f)));
+
+	// update the global coordinates
+	bird.update_local_to_global_coordinates();
+}
+
+
+void update_leader_bird(vcl::hierarchy_mesh_drawable& bird, float t, float dt, vcl::buffer<vcl::vec3>& key_positions, vcl::buffer<float>& key_times, vcl::buffer<vcl::vec3> &speeds) {
+	// INTERPOLATION
+	// Compute the interpolated position
+	vec3 const p = interpolation(t, key_positions, key_times);
+	speeds[speeds.size() - 1] = (p - bird["body"].transform.translate) / dt;
+	update_bird(bird, p, t);
+}
+
+
+void update_follower_birds(vcl::hierarchy_mesh_drawable& leader, vcl::buffer<vcl::vec3> &followers, vcl::buffer<vcl::vec3> &speeds, float t, float dt, float k_attr, float k_rep, float k_frott)
+{
+	// SIMULATION
+	vec3 force, dir;
+	float dist;
+	const float max_dist = 1.0f;
+	int nb = followers.size();
+	for (int i = 0; i < nb; i++) {
+		force  = { 0, 0, 0 };
+		for (int j = 0; j < nb; j++) {
+			if (j == i) continue;
+			dir = followers[j] - followers[i];
+			dist = norm(dir);
+			dir /= dist;
+			force += /*k_attr * dist * dist * dir / nb*/ - k_rep * dir / (dist * dist) / nb - k_frott * (speeds[i] - speeds[j]) / nb;
+		}
+		dir = leader["body"].transform.translate - followers[i];
+		dist = norm(dir);
+		dir /= dist;
+		force += 1000000*k_attr * dist * dist * dir - k_rep * dir / (dist * dist) - k_frott * (speeds[i] - speeds[nb]);
+		speeds[i] += dt * force;
+		followers[i] = followers[i] + dt * speeds[i];
+		dir = leader["body"].transform.translate - followers[i];
+		dist = norm(dir);
+		if (dist > max_dist && dot(speeds[i], speeds[nb]) < 0)
+			speeds[i] /= norm(speeds[i]);
+	}
 }

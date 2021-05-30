@@ -46,7 +46,7 @@ float t = 0;
 mesh_drawable cube_map;
 
 mesh_drawable pyramid;
-mesh_drawable palm_tree;
+hierarchy_mesh_drawable palm_tree;
 mesh_drawable column;
 hierarchy_mesh_drawable bird;
 mesh_drawable boat;
@@ -58,6 +58,13 @@ vcl::buffer<float> L0_array;
 vcl::buffer<float> raideurs;
 vec3 pos_poteau;
 mesh_drawable sphere;
+
+vcl::buffer<vec3> key_positions_bird;
+vcl::buffer<float> key_times_bird;
+vcl::buffer<vec3> follower_birds;
+vcl::buffer<vec3> speeds_birds;
+const int nb_follower_birds = 10;
+
 
 
 
@@ -136,7 +143,7 @@ void initialize_data()
     GLuint const shader_environment_map = opengl_create_shader_program(read_text_file("shader/environment_map.vert.glsl"), read_text_file("shader/environment_map.frag.glsl"));
     
     // Read cubemap texture
-    GLuint texture_cubemap = cubemap_texture("pictures/skybox_b/");
+    GLuint texture_cubemap = cubemap_texture("pictures/skybox_def/");
 
     // Cube used to display the skybox
     mesh cube = mesh_primitive_cube({0,0,0},2.0f);
@@ -168,8 +175,13 @@ void initialize_data()
     // column
     initialize_column_cyl(column, 1.0f);
 
-	// Bird
-	initialize_bird(bird, 1.0f);
+	// Birds
+	initialize_leader_bird(bird, 1.0f, key_positions_bird, key_times_bird);
+	for (int i = 0; i < nb_follower_birds; i++) {
+		follower_birds.push_back(key_positions_bird[0] + 1.0f*vec3(static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)), static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)), static_cast <float> (rand()) / (static_cast <float> (RAND_MAX))));
+		speeds_birds.push_back({ 0.1f, 0.1f, 0.1f });
+	}
+	speeds_birds.push_back({ 0.1f, 0.1f, 0.1f });
 
     // Boat
     initialize_boat(boat, 1.0f);
@@ -180,6 +192,13 @@ void initialize_data()
     pos_poteau = {4.0f,-6.0f,evaluate_terrain2(-1.0/16+0.5f,-13.0/30+0.5, terrain)[2]+0.1f};
     //initialize_corde(boat.transform.translate,pos_poteau, particules, vitesses, L0_array, raideurs);
     //sphere = mesh_drawable( mesh_primitive_sphere(0.05f));
+
+	// Set timer bounds
+	//  You should adapt these extremal values to the type of interpolation
+	size_t const N = key_times_bird.size();
+	timer.t_min = key_times_bird[1];    // Start the timer at the first time of the keyframe
+	timer.t_max = key_times_bird[N - 2];  // Ends the timer at the last time of the keyframe
+	timer.t = timer.t_min;
 }
 
 
@@ -187,8 +206,9 @@ void initialize_data()
 void display_frame()
 {
 	// Update the current time
+	float t_prev = t;
     timer.update();
-    timer.scale = 0.02f;
+    timer.scale = 0.02f; // 0.02f
     t = timer.t;
     float dt = timer.scale;
 
@@ -222,23 +242,27 @@ void display_frame()
     //draw(terrain_berge_bas, scene);
     //draw(terrain_berge_haut, scene);
     //draw(terrain_herbe, scene);
-    draw(terrain_dune, scene);
+    vcl::draw(terrain_dune, scene);
     draw_with_cubemap(terrain_water, scene);
-    draw(pyramid, scene);
-    draw(palm_tree, scene);
-    draw(column, scene);
-    draw(bird, scene);
-    draw(boat, scene);
-    draw(fern, scene);
-    draw(boat_attached, scene);
+	vcl::draw(pyramid, scene);
+	vcl::draw(palm_tree, scene);
+	vcl::draw(column, scene);
 
-    /*sphere.shading.color = {1,1,1};
-    draw(sphere, scene);
-    for(int i=0; i<NbrSpring; i++){
-        sphere.transform.translate = particules[i];
-        draw(sphere, scene);
-    }*/
+	update_leader_bird(bird, t, dt, key_positions_bird, key_times_bird, speeds_birds);
+	vcl::draw(bird, scene);
+	update_follower_birds(bird, follower_birds, speeds_birds, t, dt, 0.0001f, 0.0001f, 0.005f);
+	for (auto pos : follower_birds) {
+		bird["body"].transform.translate = pos;
+		bird.update_local_to_global_coordinates();
+		vcl::draw(bird, scene);
+		std::cout << pos[0] << " " << pos[1] << " " << pos[2] << std::endl;
+	}
 
+
+	vcl::draw(boat, scene);
+	vcl::draw(boat_attached, scene);
+
+	vcl::draw(fern, scene);
 }
 
 
