@@ -8,6 +8,7 @@
 #include "items/columns.hpp"
 #include "items/bird.hpp"
 #include "items/boat.hpp"
+//#include "items/corde.hpp"
 #include "helpers/environment_map.hpp"
 
 
@@ -50,6 +51,16 @@ mesh_drawable column;
 hierarchy_mesh_drawable bird;
 mesh_drawable boat;
 mesh_drawable fern;
+
+vcl::buffer<vcl::vec3> particules;
+vcl::buffer<vcl::vec3> vitesses;
+vcl::buffer<float> L0_array;
+vcl::buffer<float> raideurs;
+vec3 pos_poteau;
+mesh boat_mesh;
+mesh_drawable boat_attached;
+mesh_drawable sphere;
+
 
 
 int main(int, char* argv[])
@@ -167,6 +178,12 @@ void initialize_data()
 
     // Fern
     initialize_fern(fern, 1.0f);
+
+    boat_mesh = create_boat(1.0f * 7.0f, 1.0f * 2.0f, 1.0f * 1.0f);
+    initialize_boat(boat_mesh, boat_attached);
+    pos_poteau = {4.0f,-6.0f,evaluate_terrain2(-1.0/16+0.5f,-13.0/30+0.5, terrain)[2]+0.1f};
+    //initialize_corde(get_boat_pos(boat_mesh),pos_poteau, particules, vitesses, L0_array, raideurs);
+    //sphere = mesh_drawable( mesh_primitive_sphere(0.05f));
 }
 
 
@@ -177,6 +194,7 @@ void display_frame()
     timer.update();
     timer.scale = 0.02f;
     t = timer.t;
+    float dt = timer.scale;
 
     ImGui::Checkbox("Frame", &user.gui.display_frame);
     ImGui::Checkbox("Wireframe", &user.gui.display_wireframe);
@@ -196,13 +214,9 @@ void display_frame()
         //update_terrain(terrain, terrain_visual, parameters);
     }
 
-    /*
-    for(int i=0; i<3; i++) {
-        display_keypositions(sphere_keyframe, courbes_fleuve[i], scene, user.picking);
-    }
-    */
-
     update_terrain_water(terrain, terrain_water, parameters, t);
+    //update_pos_boat(boat_attached, t);
+    //update_pos_rope(particules,vitesses,L0_array,raideurs,terrain,dt);
 
     glDepthMask(GL_FALSE);
     draw_with_cubemap(cube_map, scene);
@@ -220,6 +234,15 @@ void display_frame()
     draw(bird, scene);
     draw(boat, scene);
     draw(fern, scene);
+    draw(boat_attached, scene);
+
+    /*sphere.shading.color = {1,1,1};
+    draw(sphere, scene);
+    for(int i=0; i<NbrSpring; i++){
+        sphere.transform.translate = particules[i];
+        draw(sphere, scene);
+    }*/
+
 }
 
 
