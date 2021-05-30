@@ -80,15 +80,19 @@ mesh create_palm_leaf(float width, float m, vec3 v_0, float t_max, unsigned int 
 
 vcl::mesh create_palm_tree(float size, int N_leafs, float spreading)
 {
-    float const h = size; // trunk height
-    float const r = size / 10; // trunk radius
-    float const width = 2.0f;
-    float const m = 5.0f;
-    float const t_max = size / 2;
+    float const h = size * 4.0f; // trunk height
+    float const r = size * 4.0f / 30; // trunk radius
+    float const width = size * 0.50f;
+    float const m = size * 4.0f;
+    float const t_max = size * 4.0f / 3.0f;
 
     // Trunk
     mesh trunk = create_tree_trunk_cylinder(r, h);
     trunk.color.fill({ 0.4f, 0.3f, 0.3f });
+
+    // Fruits
+    mesh fruits = mesh_primitive_ellipsoid({ size * 0.2f, size * 0.2f, size * 0.3f }, { 0.0f, 0.0f, h - size * 0.3f / 2 });
+    fruits.color.fill({ 1.0f, 1.0f, 0.0f });
 
     // Foliage
     float da = 2 * 3.14 / N_leafs;
@@ -101,6 +105,7 @@ vcl::mesh create_palm_tree(float size, int N_leafs, float spreading)
 
     // Tree
     mesh tree = trunk;
+    tree.push_back(fruits);
     tree.push_back(foliage);
 
     return tree;
@@ -295,6 +300,6 @@ vcl::mesh create_fern(float leaf_radius, float leaf_width, float trunk_radius, f
 
 void initialize_fern(vcl::mesh_drawable& fern, float size)
 {
-    fern = mesh_drawable(create_fern(1.0f, 0.3f, 0.1f, 0.03f, 2));
+    fern = mesh_drawable(create_fern(size * 1.0f, size * 0.3f, size * 0.1f, size * 0.03f, 2));
     fern.transform.translate.z = 0.4f;
 }

@@ -1,4 +1,5 @@
 #include "columns.hpp"
+#include "vegetation.hpp"
 
 
 using namespace vcl;
@@ -32,23 +33,36 @@ mesh create_disc(float radius)
 
 vcl::mesh create_column_cyl(float size)
 {
-    float const h = size; // trunk height
-    float const r = size / 10; // trunk radius
-
-    // column body
-    mesh column_body = create_tree_trunk_cylinder(r, h);
-    column_body.position += { 0.0f, 0.0f, h/10 }; // place hat at the top of the column
-    column_body.color.fill({ 0.3f, 0.3f, 0.3f });
+    float const h = size * 4.0f; // trunk height
+    float r = size * 4.0 / 5; // trunk radius
+    const int detail_level = 2;
 
     // column Hat
-    mesh hat = create_disc(3/2*r);
-    mesh hat_cyl = create_tree_trunk_cylinder(2*r, h/10);
-    mesh top_disc = create_disc(2*r);
-    top_disc.position += {0.0f, 0.0f, h/10};
+    mesh hat = create_disc(3 / 2 * r);
+    mesh hat_cyl = create_tree_trunk_cylinder(3 / 2 * r, h / 10);
+    mesh top_disc = create_disc(3 / 2 * r);
+    top_disc.position += {0.0f, 0.0f, h / 10};
     hat.push_back(hat_cyl);
     hat.push_back(top_disc);
-
     hat.color.fill({ 0.3f, 0.3f, 0.3f });
+
+    // column body
+    std::vector<vcl::mesh> list_trunks;
+    std::vector<vcl::vec3> list_centers;
+    list_trunks.push_back(create_tree_trunk_cylinder(r, h));
+    list_centers.push_back(vec3(0.0f, 0.0f, 0.0f));
+    for (int i = 0; i < detail_level; i++) {
+        r /= 3;
+        rule_trunk(list_trunks, list_centers, r, h);
+    }
+    mesh column_body;
+    for (auto trunk : list_trunks) {
+        trunk.color.fill({ 196.0 / 255, 128.0 / 255, 77.0 / 255 });
+        column_body.push_back(trunk);
+    }
+    column_body.fill_empty_field();
+    column_body.position += { 0.0f, 0.0f, h/10 }; // place hat at the top of the column
+    column_body.color.fill({ 0.3f, 0.3f, 0.3f });
 
     // entire column
     mesh column = hat;

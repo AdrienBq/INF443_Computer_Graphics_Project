@@ -27,7 +27,7 @@ vcl::mesh create_pyramid(float base, float height)
 
 void initialize_pyramid(vcl::mesh_drawable &pyramid, float size)
 {
-	pyramid = mesh_drawable(create_pyramid(size, 2*size/3));
+	pyramid = mesh_drawable(create_pyramid(size * 200.0f, size * 130.0f));
 	pyramid.transform.translate.z = 1.0f;
 	pyramid.transform.translate.x = -4.0f;
 	pyramid.transform.translate.y = -4.0f;

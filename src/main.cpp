@@ -151,13 +151,13 @@ void initialize_data()
     terrain_herbe.texture = texture("pictures/texture_grass.png");
 
 	// Pyramid
-	initialize_pyramid(pyramid, 8.0f);
+	initialize_pyramid(pyramid, 0.01f);
 
 	// Palm tree
-	initialize_palm_tree(palm_tree, 4.0f);
+	initialize_palm_tree(palm_tree, 1.0f);
 
     // column
-    initialize_column_cyl(column, 4.0f);
+    initialize_column_cyl(column, 1.0f);
 
 	// Bird
 	initialize_bird(bird, 1.0f);

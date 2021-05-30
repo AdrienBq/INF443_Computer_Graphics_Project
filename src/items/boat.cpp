@@ -40,7 +40,7 @@ vcl::mesh create_boat(float radius, float width, float height, unsigned int N)
 
 void initialize_boat(vcl::mesh_drawable& boat, float size)
 {
-	boat = vcl::mesh_drawable(create_boat(1.0f, 0.2f, 0.1f));
+	boat = vcl::mesh_drawable(create_boat(size * 7.0f, size * 2.0f, size * 1.0f));
 	boat.shading.color = { 196.0 / 255, 128.0 / 255, 77.0/255 };
-	boat.transform.translate.z = 0.1f;
+	boat.transform.translate.z = 0.2f;
 }
