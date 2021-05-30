@@ -13,9 +13,9 @@ courbes_fleuve[1] = positions_riveD; // ranges abscisses decroissants
 courbes_fleuve[2] = positions_ile; // ranges abscisses croissants
 **/
 
-float taille_berge1 = 0.15;
-float taille_berge2 = 0.4;
-float taille_berge3 = 0.7;
+float taille_berge1 = 0.2;
+float taille_berge2 = 0.3;
+float taille_berge3 = 0.5;
 
 vcl::mesh initialize_terrain()
 {
@@ -27,7 +27,7 @@ vcl::mesh initialize_terrain()
 mesh create_terrain()
 {
     // Number of samples of the terrain is N x N
-    const unsigned int N = 100;
+    const unsigned int N = 200;
 
     mesh terrain; // temporary terrain storage (CPU only)
     terrain.position.resize(N*N);
@@ -459,14 +459,29 @@ float rive_gauche(float y)
 {
     return -2.302 + y*(-0.566 + y*(-0.0496 + y*(0.017 + y*0.0011)));
 }
+float rive_gauche_d(float y)
+{
+    return -0.566 + y*(-0.0496*2 + y*(0.017*3 + y*0.0011*4));
+}
+
 float ile(float x)
 {
     return -13.578 + x*(-2.5778 + x*(-0.5222 - x*0.0222));
 }
+float ile_d(float x)
+{
+    return -2.5778 + x*(-0.5222*2 - x*0.0222*3);
+}
+
 float rive_droite(float y)
 {
     return 2.599 + y*(0.1762 + y*(-0.032 + y*(0.0258 + y*(0.006 + y*0.0002))));
 }
+float rive_droite_d(float y)
+{
+    return 0.1762 + y*(-0.032*2 + y*(0.0258*3 + y*(0.006*4 + y*0.0002*5)));
+}
+
 float dune(float x)     //zone des dunes
 {
     return 10.767 + x*(0.3125 - x*0.0354);
@@ -501,10 +516,19 @@ bool is_water_perlin(float x, float y, float noise)
 
 bool is_berge(float x, float y, float taille_berge)
 {
+    float deri_g = rive_gauche_d(y);
+    float deri_i = ile_d(x);
+    float deri_d = rive_droite_d(y);
+    float uy_g = -deri_g/std::sqrt((1+deri_g*deri_g))*taille_berge;
+    float ux_g = taille_berge/std::sqrt((1+deri_g*deri_g));
+    float ux_i = -deri_i/std::sqrt((1+deri_i*deri_i))*taille_berge;
+    float uy_i = taille_berge/std::sqrt((1+deri_i*deri_i));
+    float uy_d = -deri_d/std::sqrt((1+deri_d*deri_d))*taille_berge;
+    float ux_d = taille_berge/std::sqrt((1+deri_d*deri_d));
 
-    if(y> -10 && x < rive_gauche(y) - taille_berge) return false;
-    else if(x<0.5 && y < ile(x) - taille_berge) return false;
-    else if(y>-10.5 && y<4.5 && x > rive_droite(y) + taille_berge) return false;
+    if(y> -10 && x+ux_g < rive_gauche(y + uy_g)) return false;
+    else if(x<0.5 && y+uy_i < ile(x+ux_i)) return false;
+    else if(y>-10.5 && y<4.5 && x-ux_d > rive_droite(y-uy_d)) return false;
     return true;
 }
 

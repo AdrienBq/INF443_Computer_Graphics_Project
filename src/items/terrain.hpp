@@ -18,8 +18,11 @@ vcl::vec3 evaluate_terrain2(float u, float v, vcl::mesh& terrain);
 vcl::vec3 evaluate_terrain(float u, float v);
 
 float rive_gauche(float y);
+float rive_gauche_d(float y);
 float rive_droite(float y);
+float rive_droite_d(float y);
 float ile(float x);
+float ile_d(float x);
 float dune(float x);
 
 vcl::vec4 heights_dunes(float x);
