@@ -27,7 +27,7 @@ vcl::mesh initialize_terrain()
 mesh create_terrain()
 {
     // Number of samples of the terrain is N x N
-    const unsigned int N = 200;
+    const unsigned int N = 100;
 
     mesh terrain; // temporary terrain storage (CPU only)
     terrain.position.resize(N*N);
@@ -47,7 +47,7 @@ mesh create_terrain()
 
             // Store vertex coordinates
             terrain.position[kv+N*ku] = p;
-            terrain.uv[kv+N*ku] = {10*u,10*v};
+            terrain.uv[kv+N*ku] = {8*u,15*v};
         }
     }
 
@@ -71,7 +71,7 @@ mesh create_terrain()
     return terrain;
 }
 
-vcl::vec3 evaluate_terrain2(float u, float v, vcl::mesh& terrain)
+vcl::vec3 evaluate_terrain2(float u, float v, vcl::mesh& terrain)   //renvoie la position du mesh aux coordonnees reduits (u,v)
 {
     vec3 pos;
     int const N = std::sqrt(terrain.position.size());
@@ -91,7 +91,23 @@ vcl::vec3 evaluate_terrain(float u, float v)
     return {x,y,z};
 }
 
-void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters)
+void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual1, vcl::mesh_drawable& terrain_visual2, vcl::mesh_drawable& terrain_visual3, vcl::mesh_drawable& terrain_visual4, vcl::mesh_drawable& terrain_visual5, vcl::mesh_drawable& terrain_visual6, perlin_noise_parameters const& parameters, float t, float tmax)
+{
+    update_terrain_herbe(terrain, terrain_visual1, parameters);
+    update_terrain_rive_droite(terrain, terrain_visual1, parameters);
+    update_terrain_berge_bas(terrain, terrain_visual2, parameters);
+    update_terrain_berge_milieu(terrain, terrain_visual3, parameters);
+    update_terrain_berge_haut(terrain, terrain_visual4, parameters);
+    update_terrain_dune(terrain, terrain_visual5, parameters);
+    update_terrain_water(terrain, terrain_visual6, parameters, t, tmax);
+}
+void update_terrain2(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual1, vcl::mesh_drawable& terrain_visual2, perlin_noise_parameters const& parameters, float t, float tmax)
+{
+    update_terrain_not_water(terrain, terrain_visual1, parameters);
+    update_terrain_water(terrain, terrain_visual2, parameters, t, tmax);
+}
+
+void update_terrain_not_water(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters)
 {
     // Number of samples in each direction (assuming a square grid)
     int const N = std::sqrt(terrain.position.size());
@@ -109,24 +125,53 @@ void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perl
             // Compute the Perlin noise
             float const noise = noise_perlin({u, v}, parameters.octave, parameters.persistency, parameters.frequency_gain);
 
-            if(is_water(terrain.position[idx].x,terrain.position[idx].y)){
-                terrain.position[idx].z = 0;
-                // use noise as color value
-                terrain.color[idx] = 0.3f*vec3(0,0.0,1.0f)+0.5f*noise*vec3(1,1,1);
-            }
-
-            else if (is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge1)){
+            if (!is_water(terrain.position[idx].x,terrain.position[idx].y)
+                    && is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge1)){
                 // use the noise as height value
-                terrain.position[idx].z = parameters.terrain_height*noise*0.5;
+                terrain.position[idx].z = parameters.terrain_height*noise*0.3;
                 // use noise as color value
                 terrain.color[idx] = vec3(0.31f,0.17f,0.04f)+0.5f*noise*vec3(1,1,1);
             }
-            else if (is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge2)){
+            else if (!is_water(terrain.position[idx].x,terrain.position[idx].y)
+                    && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge1)
+                    && is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge2)){
+                // use the noise as height value
+                terrain.position[idx].z = parameters.terrain_height*noise*0.6;
+                // use noise as color value
+                terrain.color[idx] = vec3(0.34f,0.16f,0.0f)+0.5f*noise*vec3(1,1,1);
+            }
+            if (!is_water(terrain.position[idx].x,terrain.position[idx].y)
+                    && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge1)
+                    && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge2)
+                    && is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge3)){
                 // use the noise as height value
                 terrain.position[idx].z = parameters.terrain_height*noise;
                 // use noise as color value
                 terrain.color[idx] = vec3(0.34f,0.16f,0.0f)+0.5f*noise*vec3(1,1,1);
             }
+            else if(!is_water(terrain.position[idx].x,terrain.position[idx].y)
+                     && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge1)
+                     && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge2)
+                     && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge3)
+                     && !is_dune(terrain.position[idx].x,terrain.position[idx].y)
+                     && !is_rive_droite(terrain.position[idx].x,terrain.position[idx].y) )
+            {
+                // use also the noise as color value
+                terrain.color[idx] = 0.3f*vec3(0,0.5f,0)+0.7f*noise*vec3(1,1,1);
+                // use the noise as height value
+                terrain.position[idx].z = parameters.terrain_height*noise + evaluate_dune(terrain.position[idx].x,terrain.position[idx].y, parameters.terrain_height);
+            }
+
+            else if(!is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge1)
+                    && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge2)
+                    && !is_berge(terrain.position[idx].x,terrain.position[idx].y, taille_berge3)
+                    && is_rive_droite(terrain.position[idx].x,terrain.position[idx].y) )
+           {
+               // use also the noise as color value
+               terrain.color[idx] = 0.3f*vec3(0.76f,0.7f,0.5f)+0.7f*noise*vec3(1,1,1);
+               // use the noise as height value
+               terrain.position[idx].z = parameters.terrain_height*noise + evaluate_dune(terrain.position[idx].x,terrain.position[idx].y, parameters.terrain_height);
+           }
 
             else if (is_dune(terrain.position[idx].x,terrain.position[idx].y)){
                 // use also the noise as color value
@@ -135,12 +180,6 @@ void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perl
                 terrain.position[idx].z = parameters.terrain_height*noise*
                         std::exp(-(terrain.position[idx].y-dune(terrain.position[idx].x))*(terrain.position[idx].y-dune(terrain.position[idx].x)))
                         + evaluate_dune(terrain.position[idx].x,terrain.position[idx].y, parameters.terrain_height);
-            }
-            else {
-                // use also the noise as color value
-                terrain.color[idx] = 0.3f*vec3(0,0.5f,0)+0.7f*noise*vec3(1,1,1);
-                // use the noise as height value
-                terrain.position[idx].z = parameters.terrain_height*noise + evaluate_dune(terrain.position[idx].x,terrain.position[idx].y, parameters.terrain_height);
             }
         }
     }
@@ -153,17 +192,6 @@ void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perl
     terrain_visual.update_normal(terrain.normal);
     terrain_visual.update_color(terrain.color);
 
-}
-
-void update_terrain(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual1, vcl::mesh_drawable& terrain_visual2, vcl::mesh_drawable& terrain_visual3, vcl::mesh_drawable& terrain_visual4, vcl::mesh_drawable& terrain_visual5, vcl::mesh_drawable& terrain_visual6, perlin_noise_parameters const& parameters, float t, float tmax)
-{
-    update_terrain_herbe(terrain, terrain_visual1, parameters);
-    update_terrain_rive_droite(terrain, terrain_visual1, parameters);
-    update_terrain_berge_bas(terrain, terrain_visual2, parameters);
-    update_terrain_berge_milieu(terrain, terrain_visual3, parameters);
-    update_terrain_berge_haut(terrain, terrain_visual4, parameters);
-    update_terrain_dune(terrain, terrain_visual5, parameters);
-    update_terrain_water(terrain, terrain_visual6, parameters, t, tmax);
 }
 
 void update_terrain_water(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters, float t, float tmax)
@@ -200,32 +228,6 @@ void update_terrain_water(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual
     terrain_visual.update_position(terrain.position);
     terrain_visual.update_normal(terrain.normal);
     terrain_visual.update_color(terrain.color);
-}
-
-void rotate_terrain(vcl::mesh& cube, vcl::mesh_drawable& cube_visual)
-{
-    // Number of samples in each direction (assuming a square grid)
-    int const N = cube.position.size();
-
-    // rotation matrix
-    mat3 R = {
-        1,0,0,0,
-        0,0,-1,0,
-        0,1,0,0,
-        0,0,0,1
-    };
-
-    // Recompute the new vertices
-    for (int idx=0; idx<N; ++idx) {
-        cube.position[idx] = R*cube.position[idx];
-    }
-    // Update the normal of the mesh structure
-    cube.compute_normal();
-
-    // Update step: Allows to update a mesh_drawable without creating a new one
-    cube_visual.update_position(cube.position);
-    cube_visual.update_normal(cube.normal);
-    cube_visual.update_color(cube.color);
 }
 
 void update_terrain_berge_bas(vcl::mesh& terrain, vcl::mesh_drawable& terrain_visual, perlin_noise_parameters const& parameters)
@@ -548,14 +550,6 @@ bool is_water(float x, float y)
     return true;
 }
 
-bool is_water_perlin(float x, float y, float noise)
-{
-    if(x < rive_gauche(y) + noise) return false;
-    else if(x<0.5 && y < ile(x) + noise) return false;
-    else if(y>-10.5 && y<4.5 && x > rive_droite(y) + noise) return false;
-    return true;
-}
-
 bool is_berge(float x, float y, float taille_berge)
 {
     float deri_g = rive_gauche_d(y);
@@ -586,112 +580,6 @@ bool is_rive_droite(float x, float y)
     return false;
 }
 
-float evaluate_dune1(float x, float y, float height)
-{
-    vec2 const d0 = {-8.5f, 14.5f};
-    vec2 const d1 = {-7.0f, 11.0f};
-    vec2 const d2 = {-5.0f, 13.7f};
-    vec2 const d3 = {-3.5f, 12.2f};
-    vec2 const d4 = {-2.5f, 14.7f};
-    vec2 const d5 = {-0.0f, 13.4f};
-    vec2 const d6 = {2.0f, 15.2f};
-    vec2 const d7 = {3.5f, 13.1f};
-    vec2 const d8 = {6.0f, 14.5f};
-    vec2 const d9 = {8.5f, 13.6f};
-    vec2 vects[10] = {d0, d1, d2, d3, d4, d5, d6, d7, d8, d9};
-
-    float const h0 = 7.0f*height;
-    float const h1 = 4.0f*height;
-    float const h2 = 5.0f*height;
-    float const h3 = 2.0f*height;
-    float const h4 = 5.0f*height;
-    float const h5 = 3.0f*height;
-    float const h6 = 6.0f*height;
-    float const h7 = 2.0f*height;
-    float const h8 = 5.0f*height;
-    float const h9 = 3.0f*height;
-    float h[10] = {h0, h1, h2, h3, h4, h5, h6, h7, h8, h9};
-
-    float const sigma0 = 2.4f;
-    float const sigma1 = 1.8f;
-    float const sigma2 = 1.9f;
-    float const sigma3 = 3.0f;
-    float const sigma4 = 1.7f;
-    float const sigma5 = 2.6f;
-    float const sigma6 = 2.2f;
-    float const sigma7 = 2.8f;
-    float const sigma8 = 1.4f;
-    float const sigma9 = 2.4f;
-    float sig[10] = {sigma0, sigma1, sigma2, sigma3, sigma4, sigma5, sigma6, sigma7, sigma8, sigma9};
-
-    float z = 0.0f;
-    float d;
-    for(int i = 0; i<10; i+=2){
-        d = norm(vec2(x,y)-vects[i])/sig[i];
-        z+= h[i]*std::exp(-d*d);
-    }
-
-
-    return z;
-}
-
-bool is_water1(float x, float y, buffer<vec3> *courbes_fleuve)
-{
-    float dt = 0.01f;
-
-    for(int i=0; i<3; i++){
-        int N = courbes_fleuve[i].size();
-        int cpt = 0;
-        bool B = false;
-        float t = 0;
-        if(i != 1){
-            while(!B && cpt<N-1){
-                if(courbes_fleuve[i][cpt][0] >= x){
-                    B = true;
-                }
-                cpt++;
-            }
-        }
-        else{
-            while(!B && cpt<N-1){
-                if(courbes_fleuve[i][cpt][1] >= y){
-                    B = true;
-                }
-                cpt++;
-            }
-        }
-
-        if(B){
-            if(cpt == 1) cpt+=1; // on considÃ¨re le seg [1, 2] ie le premier seg car on a double le premier pt (on est tombÃ© pile sur l'abscisse du premier pt de controle)
-            else cpt-=1;
-            vec3 pprev = cardinal_spline_interpolation(t, 0, 1, 2, 3, courbes_fleuve[i][cpt-2], courbes_fleuve[i][cpt-1], courbes_fleuve[i][cpt], courbes_fleuve[i][cpt+1], 0.5);
-            vec3 psuiv = cardinal_spline_interpolation(t+dt, 0, 1, 2, 3, courbes_fleuve[i][cpt-2], courbes_fleuve[i][cpt-1], courbes_fleuve[i][cpt], courbes_fleuve[i][cpt+1], 0.5);
-            if(i!=1){
-                while(psuiv[0] < x && t<1){
-                    t += dt;
-                    pprev = psuiv;
-                    psuiv = cardinal_spline_interpolation(t+dt, 0, 1, 2, 3, courbes_fleuve[i][cpt-2], courbes_fleuve[i][cpt-1], courbes_fleuve[i][cpt], courbes_fleuve[i][cpt+1], 0.5);
-                }
-                float y_interpol = pprev[1] + (psuiv[1] - pprev[1])/(psuiv[0] - pprev[0])*(x - pprev[0]);
-                //comparaison y_interpol et v en fonction de i (ie : de la rive)
-                if(i == 0 && y > y_interpol) return false;
-                if(i == 2 && y < y_interpol) return false;
-            }
-            else{
-                while(psuiv[1] < y && t<1){
-                    t += dt;
-                    pprev = psuiv;
-                    psuiv = cardinal_spline_interpolation(t+dt, 0, 1, 2, 3, courbes_fleuve[i][cpt-2], courbes_fleuve[i][cpt-1], courbes_fleuve[i][cpt], courbes_fleuve[i][cpt+1], 0.5);
-                }
-                float x_interpol = pprev[0] + (psuiv[0] - pprev[0])/(psuiv[1] - pprev[1])*(y - pprev[1]);
-                //comparaison x_interpol et u en fonction de i (ie : de la rive)
-                if(x > x_interpol) return false;
-            }
-        }
-    }
-    return true;
-}
-
 
 GLuint texture(const std::string& filename)
 {
@@ -706,11 +594,11 @@ GLuint texture(const std::string& filename)
     return texture_image_id1;
 }
 
-std::vector<vcl::vec3> generate_positions_forêt(int N, vcl::mesh& terrain) // les N/2 premiers pour les arbres et les autres pour les fougères
+std::vector<vcl::vec3> generate_positions_forest(int N, vcl::mesh& terrain) // les N/2 premiers pour les arbres et les autres pour les fougères
 {
     std::vector<vcl::vec3> tab;
     int i = 0;
-    float dmin = 1.0f;
+    float dmin = 0.01f;
     int it = 0;
     int Max_it = 2*N;
     bool b;
@@ -750,34 +638,35 @@ std::vector<vcl::vec3> generate_positions_forêt(int N, vcl::mesh& terrain) // l
 std::vector<vcl::vec3> generate_positions_pyramids(vcl::mesh& terrain, perlin_noise_parameters const& parameters)
 {
     std::vector<vcl::vec3> tab;
-    tab.push_back({7.0f,-8.0f,evaluate_terrain2(7.0f/16+0.5f,-8.0f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
-    tab.push_back({3.0f,-7.0f,evaluate_terrain2(3.0f/16+0.5f,-7.0f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
-    tab.push_back({6.0f,0.0f,evaluate_terrain2(6.0f/16+0.5f,0.5f,terrain)[2]-parameters.terrain_height*0.5f});
-    tab.push_back({2.0f,9.0f,evaluate_terrain2(2.0f/16+0.5f,9.0f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
+    tab.push_back({7.0f,-6.5f,parameters.terrain_height*0.6 + evaluate_dune(7.0f,-6.5f, parameters.terrain_height)});
+    tab.push_back({4.0f,-6.0f,parameters.terrain_height*0.6 + evaluate_dune(4.0f,-6.0f, parameters.terrain_height)});
+    tab.push_back({6.0f,0.0f,parameters.terrain_height*0.6 + evaluate_dune(6.0f,0.0f, parameters.terrain_height)});
+    tab.push_back({2.0f,10.0f,parameters.terrain_height*0.7 + evaluate_dune(2.0f,10.0f, parameters.terrain_height)});
     return tab;
 }
 
 std::vector<vcl::vec3> generate_positions_columns(vcl::mesh& terrain, perlin_noise_parameters const& parameters)
 {
     std::vector<vcl::vec3> tab;
-    tab.push_back({-6.0f,6.3f,evaluate_terrain2(-6.0f/16+0.5f,6.3f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
-    tab.push_back({-5.0f,7.0f,evaluate_terrain2(-5.0f/16+0.5f,7.0f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
-    tab.push_back({-4.0f,7.7f,evaluate_terrain2(-4.0f/16+0.5f,7.7f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
-    tab.push_back({-3.0f,8.3f,evaluate_terrain2(-3.0f/16+0.5f,8.3f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
-    tab.push_back({-2.0f,9.0f,evaluate_terrain2(-2.0f/16+0.5f,9.0f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
-    tab.push_back({4.0f,8.5f,evaluate_terrain2(4.0f/16+0.5f,8.5f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
-    tab.push_back({5.0f,8.5f,evaluate_terrain2(5.0f/16+0.5f,8.5f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
-    tab.push_back({6.0f,8.5f,evaluate_terrain2(6.0f/16+0.5f,8.5f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
-    tab.push_back({4.0f,9.5f,evaluate_terrain2(4.0f/16+0.5f,9.5f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
-    tab.push_back({5.0f,9.5f,evaluate_terrain2(5.0f/16+0.5f,9.5f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
-    tab.push_back({6.0f,9.5f,evaluate_terrain2(6.0f/16+0.5f,9.5f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
+    tab.push_back({-6.0f,6.3f,parameters.terrain_height + evaluate_dune(-6.0f,6.3f, parameters.terrain_height)});
+    tab.push_back({-5.0f,7.0f,parameters.terrain_height + evaluate_dune(-5.0f,7.0f, parameters.terrain_height)});
+    tab.push_back({-4.0f,7.7f,parameters.terrain_height + evaluate_dune(-4.0f,7.7f, parameters.terrain_height)});
+    tab.push_back({-3.0f,8.3f,parameters.terrain_height + evaluate_dune(-3.0f,8.3f, parameters.terrain_height)});
+    tab.push_back({-2.0f,9.0f,parameters.terrain_height + evaluate_dune(-2.0f,9.0f, parameters.terrain_height)});
+    tab.push_back({4.0f,10.5f,parameters.terrain_height + evaluate_dune(4.0f,10.5f, parameters.terrain_height)});
+    tab.push_back({5.0f,10.5f,parameters.terrain_height + evaluate_dune(5.0f,10.5f, parameters.terrain_height)});
+    tab.push_back({6.0f,10.5f,parameters.terrain_height + evaluate_dune(6.0f,10.5f, parameters.terrain_height)});
+    tab.push_back({4.0f,9.5f,parameters.terrain_height + evaluate_dune(4.0f,9.5f, parameters.terrain_height)});
+    tab.push_back({5.0f,9.5f,parameters.terrain_height + evaluate_dune(5.0f,9.5f, parameters.terrain_height)});
+    tab.push_back({6.0f,9.5f,parameters.terrain_height + evaluate_dune(6.0f,9.5f, parameters.terrain_height)});
 
     return tab;
 }
 
-std::vector<vcl::vec3> generate_positions_obelix(vcl::mesh& terrain, perlin_noise_parameters const& parameters)
+
+std::vector<vcl::vec3> generate_positions_obelisque(vcl::mesh& terrain, perlin_noise_parameters const& parameters)
 {
     std::vector<vcl::vec3> tab;
-    tab.push_back({-4.0f,-3.0f,evaluate_terrain2(-4.0f/16+0.5f,-3.0f/30+0.5f,terrain)[2]-parameters.terrain_height*0.5f});
+    tab.push_back({-4.0f,-3.0f,parameters.terrain_height*0.6 + evaluate_dune(-4.0f,-3.0f, parameters.terrain_height)});
     return tab;
 }
