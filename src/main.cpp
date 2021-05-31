@@ -210,7 +210,7 @@ void display_frame()
     timer.update();
     //timer.scale = 0.02f; // 0.02f
     t = timer.t;
-    int nbr_it = 10;
+    int nbr_it = 50;
     float dt = timer.scale*1/nbr_it;
 
     ImGui::Checkbox("Frame", &user.gui.display_frame);
@@ -249,7 +249,9 @@ void display_frame()
 
 	update_leader_bird(bird, t, dt, key_positions_bird, key_times_bird, speeds_birds);
 	vcl::draw(bird, scene);
-	update_follower_birds(bird, follower_birds, speeds_birds, t, dt, 0.0001f, 0.0001f, 0.005f);
+	for (int i = 0; i < nbr_it; i++) {
+		update_follower_birds(bird, follower_birds, speeds_birds, t, dt, 0.0001f, 0.0001f, 0.005f);
+	}
 	for (auto pos : follower_birds) {
 		bird["body"].transform.translate = pos;
 		bird.update_local_to_global_coordinates();
@@ -262,12 +264,12 @@ void display_frame()
 	vcl::draw(fern, scene);
 
     update_pos_boat(boat, t);
-    for(int i=0; i<10; i++){
+    for(int i=0; i<nbr_it; i++){
         update_pos_rope(boat.transform.translate, particules,vitesses,L0_array,raideurs,terrain,dt);
     }
     vcl::draw(boat, scene);
     sphere.shading.color = {1,1,1};
-    for(int i=0; i<nbr_it; i++){
+    for(int i=0; i<10; i++){
         sphere.transform.translate = particules[i];
         draw(sphere, scene);
     }

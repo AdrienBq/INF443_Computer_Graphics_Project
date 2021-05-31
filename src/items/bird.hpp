@@ -2,6 +2,7 @@
 
 #include "vcl/vcl.hpp"
 
+
 struct bird_parameters {
 	float const radius_head = 0.05f;
 	vcl::vec3 scale_body = { 0.05f, 0.15f, 0.03f };
@@ -9,8 +10,10 @@ struct bird_parameters {
 	float const length_wing = 0.20f;
 	float const radius_beak = 0.02f;
 	float const height_beak = 0.04;
-	vcl::buffer<vcl::vec3> key_positions = { {0,-0.5,3}, {-1,-0.5,3}, {1,1,3}, {1,2,3}, {2,2,3}, {2,2,3}, {2,0,3}, {1.5,-1,3}, {1.5,-1,3}, {1,-1,3}, {0,-0.5,3}, {-1,-0.5,3} };
-	vcl::buffer<float> key_times = { 0.0f, 1.0f, 2.0f, 2.5f, 3.0f, 3.5f, 3.75f, 4.5f, 5.0f, 6.0f, 7.0f, 8.0f };
+	vcl::buffer<vcl::vec3> key_positions = { {-7.0f,-10.0f,3.0f}, {-8.0f,-7.2f,3.0f}, {-6.6f,-3.4f,3.0f}, {-5.6f,-0.2f,3.0f}, {-5.4f,1.4f,3.0f}, {1.3f,6.2f,3.0f}, {6.5f,8.8f,3.0f}, {8.0f,9.4f,3.0f},
+								{8.0f,4.6f,3.0f}, {6.4f,4.0f,3.0f}, {3.2f,2.4f,3.0f}, {2.6f,0.6f,3.0f}, {4.0f,-2.6f,3.0f}, {6.6f,-6.6f,3.0f}, {8.0f,-8.6f,3.0f},
+								{1.5f,-10.0f,3.0f}, {-1.42f,-6.6f,3.0f}, {-4.6f,-6.4f,3.0f}, {-7.0f,-10.0f,3.0f}, {-8.0f,-7.2f,3.0f} };
+	vcl::buffer<float> key_times = { 0.0f, 4.0f, 8.0f, 12.0f, 16.0f, 20.0f, 24.0f, 28.0f, 32.0f, 36.0f, 40.0f, 44.0f, 48.0f, 52.0f, 56.0f, 60.0f, 64.0f, 68.0f, 72.0f, 76.0f, 80.0f, 84.0f };
 };
 
 
