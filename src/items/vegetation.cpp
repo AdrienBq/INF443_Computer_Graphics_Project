@@ -7,7 +7,7 @@ using namespace vcl;
 mesh create_tree_trunk_cylinder(float radius, float height)
 {
     /*mesh m;
-    const unsigned int N = 100;
+    const unsigned int N = 50;
     m.position.resize(N);
     m.uv.resize(N);
 
@@ -21,7 +21,7 @@ mesh create_tree_trunk_cylinder(float radius, float height)
             y = radius * std::sin(2 * 3.14f * i / N);
         }
         m.position[i] = { x, y, z };
-        m.uv[i] = { 20 * i % N / N, z / height };
+        m.uv[i] = { 8 * 20 * i % N / N, 8 * z / height };
     }
 
     for (int i = 0; i < N - 2; i++) {
@@ -39,7 +39,8 @@ mesh create_tree_trunk_cylinder(float radius, float height)
         m.connectivity.push_back({ N - 1, 0, 1 });
     }
 
-    m.fill_empty_field*/
+    m.fill_empty_field();
+    return m;*/
     return mesh_primitive_cylinder(radius, { 0,0,0 }, { 0,0,height }, 10, 20, true);
 }
 
@@ -51,6 +52,7 @@ mesh create_palm_leaf(float width, float m, vec3 v_0, float t_max, unsigned int 
     leaf.uv.resize(3 * N + 2);
     double dt = t_max / N;
     vec3 g = { 0.0f, 0.0f, -9.81f / m };
+    v_0.z += static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (3.14f / 4)));
     float norm = v_0.x * v_0.x + v_0.y * v_0.y + v_0.z * v_0.z;
     vec3 dir_width = { - v_0.y / norm, v_0.x / norm, 0.0f };
     double t = 0.0;
@@ -89,26 +91,26 @@ mesh create_palm_leaf(float width, float m, vec3 v_0, float t_max, unsigned int 
 vcl::hierarchy_mesh_drawable create_palm_tree(float size, int N_leafs, float spreading)
 {
     float const h = size * 4.0f; // trunk height
-    float const r = size * 4.0f / 30; // trunk radius
-    float const width = size * 0.50f;
+    float const r = size * 4.0f / 20; // trunk radius
+    float const width = size * 1.0f;
     float const m = size * 4.0f;
-    float const t_max = size * 4.0f / 3.0f;
+    float const t_max = size * 5.0f / 3.0f;
 
     // Trunk
     mesh trunk = create_tree_trunk_cylinder(r, h);
     //trunk.color.fill({ 0.4f, 0.3f, 0.3f });
 
     // Fruits
-    mesh fruits = mesh_primitive_ellipsoid({ size * 0.2f, size * 0.2f, size * 0.3f }, { 0.0f, 0.0f, h - size * 0.3f / 2 });
+    mesh fruits = mesh_primitive_ellipsoid({ size * 0.4f, size * 0.4f, size * 0.5f }, { 0.0f, 0.0f, h - size * 0.7f / 2 });
     //fruits.color.fill({ 1.0f, 1.0f, 0.0f });
 
     // Foliage
     float da = 2 * 3.14 / N_leafs;
     mesh foliage = create_palm_leaf(width, m, { spreading, 0.0f, 1.0f }, t_max, 50);
-    for (int i = 1; i < 10; i++) {
+    for (int i = 1; i < N_leafs; i++) {
         foliage.push_back(create_palm_leaf(width, m, { spreading * std::cos(i * da), spreading * std::sin(i * da), 1.0f }, t_max));
     }
-    foliage.position += { 0.0f, 0.0f, h }; // place foliage at the top of the trunk
+    foliage.position += { 0.0f, 0.0f, h*1.01f }; // place foliage at the top of the trunk
     //foliage.color.fill({ 0.0f, 1.0f, 0.0f });
 
     // Tree
@@ -123,7 +125,7 @@ vcl::hierarchy_mesh_drawable create_palm_tree(float size, int N_leafs, float spr
 
 void initialize_palm_tree(vcl::hierarchy_mesh_drawable& palm_tree, float size)
 {
-    palm_tree = create_palm_tree(size);
+    palm_tree = create_palm_tree(size, 20);
     palm_tree["trunk"].transform.translate.x = 4.0f;
     palm_tree.update_local_to_global_coordinates();
 

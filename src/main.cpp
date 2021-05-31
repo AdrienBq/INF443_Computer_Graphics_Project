@@ -73,6 +73,8 @@ std::vector<vec3> pos_pyramids;
 std::vector<vec3> pos_columns;
 std::vector<vec3> pos_obelisques;
 
+vcl::buffer<float> rotation_palm_tree;
+
 
 
 
@@ -161,7 +163,7 @@ void initialize_data()
     GLuint const shader_environment_map = opengl_create_shader_program(read_text_file("shader/environment_map.vert.glsl"), read_text_file("shader/environment_map.frag.glsl"));
     
     // Read cubemap texture
-    GLuint texture_cubemap = cubemap_texture("pictures/skybox_def/");
+    GLuint texture_cubemap = cubemap_texture("pictures/skybox_sky/");
 
     // Cube used to display the skybox
     mesh cube = mesh_primitive_cube({0,0,0},2.0f);
@@ -215,6 +217,8 @@ void initialize_data()
     // Forest
     int nbr_forest = 100;
     pos_forest = generate_positions_forest(nbr_forest, terrain);
+    for (int i = 0; i < pos_forest.size(); i++)
+        rotation_palm_tree.push_back(static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2 * 3.14f))));
 
     // Fern
     initialize_fern(fern, 0.1f);
@@ -296,6 +300,7 @@ void display_frame()
     // forest
     for(int i=0; i<pos_forest.size();i++){
         palm_tree["trunk"].transform.translate = pos_forest[i];
+        palm_tree["trunk"].transform.rotate = rotation({ 0,0,1 }, rotation_palm_tree[i]);
         palm_tree.update_local_to_global_coordinates();
         vcl::draw(palm_tree, scene);
     }

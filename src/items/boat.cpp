@@ -27,7 +27,7 @@ vcl::mesh create_boat(float radius, float width, float height, unsigned int N)
 		boat.position[k] = { width / 2 - radius + x, y, height };
 		boat.position[N + k] = { radius - width / 2 - x, y, height };
 		boat.position[2 * N + k - 1] = { 0.0f, y, 0.0f };
-		float u = k / N;
+		float u = 8.0f * k / N;
 		boat.uv[k] = { u, 0 };
 		boat.uv[N + k] = { u, 0 };
 		boat.uv[2 * N + k - 1] = { u, 1.0f };
@@ -48,6 +48,37 @@ vcl::mesh create_boat(float radius, float width, float height, unsigned int N)
 	boat.connectivity.push_back({ 3 * N - 2, 2 * N - 1, N });
 
 	boat.fill_empty_field();
+
+	
+	mesh fond;
+	fond.position.resize(2 * N);
+	fond.uv.resize(2 * N);
+	fond.position[0] = { 0.0f, -radius * std::sin(alpha), height / 2 };
+	fond.uv[0] = { 0, 0 };
+	for (int k = 1; k < N; k++) {
+		x = radius * std::cos(-alpha + k * beta);
+		y = radius * std::sin(-alpha + k * beta);
+		fond.position[k] = { (width / 2 - radius + x) / 2, y, height / 2 };
+		fond.position[N + k] = { (radius - width / 2 - x) / 2, y, height / 2 };
+		float u = 8.0f * k / N;
+		fond.uv[k] = { u, 0 };
+		fond.uv[N + k] = { u, 0 };
+	}
+	// k = N
+	fond.position[N] = { 0.0f, radius * std::sin(alpha) / 2, height / 2 };
+	fond.uv[N] = { 1.0f, 0 };
+
+	for (int i = 1; i < N - 1; i++) {
+		fond.connectivity.push_back({ i, i + 1, N + i });
+		fond.connectivity.push_back({ N + i, i + 1, N + i + 1 });
+	}
+	fond.connectivity.push_back({ 0, 1, N + 1 });
+	fond.connectivity.push_back({ N - 1, 2 * N - 1, N });
+
+	fond.fill_empty_field();
+
+	boat.push_back(fond);
+
 	return boat;
 }
 
@@ -80,7 +111,7 @@ vcl::vec3 get_translation_to_bow(float size)
 
 void update_pos_boat(vcl::mesh_drawable& boat, float t, float tmax)
 {
-    boat.transform.translate = {4.0f+std::sin(20*pi*(t+ static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 0.01f))) /tmax)/10 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 0.002f)) - 0.001f,-10.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 0.002f)) - 0.001f,0.08f};
+    boat.transform.translate = {4.0f+std::sin(20*pi*(t+ static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 0.01f))) /tmax)/10 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 0.002f)) - 0.001f,-9.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 0.002f)) - 0.001f,0.08f};
 }
 
 
