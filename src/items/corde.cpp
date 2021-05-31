@@ -45,8 +45,7 @@ void update_pos_rope(vcl::vec3 pos_bateau, vcl::buffer<vcl::vec3>& particules, v
     // Numerical Integration (Verlet)
 
     // update particules positions
-
-    particules[NbrSpring-1] = pos_bateau;
+    particules[NbrSpring - 1] = pos_bateau;
     for(int i=1; i<NbrSpring-1; i++){
         vitesses[i] = (1-mu)*vitesses[i] + dt * forces[i] / m;
         particules[i] = particules[i] + dt * vitesses[i];
