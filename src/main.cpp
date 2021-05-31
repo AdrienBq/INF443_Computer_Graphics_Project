@@ -210,7 +210,8 @@ void display_frame()
     timer.update();
     //timer.scale = 0.02f; // 0.02f
     t = timer.t;
-    float dt = timer.scale*0.01;
+    int nbr_it = 10;
+    float dt = timer.scale*1/nbr_it;
 
     ImGui::Checkbox("Frame", &user.gui.display_frame);
     ImGui::Checkbox("Wireframe", &user.gui.display_wireframe);
@@ -261,10 +262,12 @@ void display_frame()
 	vcl::draw(fern, scene);
 
     update_pos_boat(boat, t);
-    update_pos_rope(boat.transform.translate, particules,vitesses,L0_array,raideurs,terrain,dt);
+    for(int i=0; i<10; i++){
+        update_pos_rope(boat.transform.translate, particules,vitesses,L0_array,raideurs,terrain,dt);
+    }
     vcl::draw(boat, scene);
     sphere.shading.color = {1,1,1};
-    for(int i=0; i<10; i++){
+    for(int i=0; i<nbr_it; i++){
         sphere.transform.translate = particules[i];
         draw(sphere, scene);
     }
