@@ -1,7 +1,14 @@
 #include "boat.hpp"
+#include "../helpers/interpolation.hpp"
 #include <cmath>
 
 using namespace vcl;
+
+vcl::buffer<vcl::vec3> key_positions = { {8.0f,6.0f,0.08f}, {8.0f,6.0f,0.08f}, {7.0f,5.5f,0.08f}, {2.0f,4.0f,0.08f}, {1.0f,-1.0f,0.08f},
+                                         {-2.0f,-8.0f,0.08f}, {-6.0f,-10.0f,0.08f}, {-7.9f,-10.95f,0.08f}, {-8.0f,-11.0f,0.08f}, {-8.0f,-11.0f,0.08f} };
+vcl::buffer<float> key_times = { 0.0f, 2.0f, 6.0f, 12.0f, 18.0f, 26.0f, 32.0f,  34.0f,  36.0f, 38.0f };
+int idx_last_key_time_boat;
+
 
 vcl::mesh create_boat(float radius, float width, float height, unsigned int N)
 {
@@ -61,10 +68,53 @@ void initialize_boat(vcl::mesh_drawable& boat, float size)
 
 	// Associate the texture_image_id to the image texture used when displaying visual
 	boat.texture = texture_image_id;
+    idx_last_key_time_boat = 1;
 }
 
 
 void update_pos_boat(vcl::mesh_drawable& boat, float t, float tmax)
 {
     boat.transform.translate = {4.0f+std::sin(20*pi*t/tmax)/4,-12.0f,0.08f};
+}
+
+
+void update_boat_drift(vcl::mesh_drawable& boat, float t)
+{
+    // INTERPOLATION
+    // Compute the interpolated position
+    vec3 const p = interpolation(t, key_positions, key_times);
+    boat.transform.translate = p;
+
+    // Compute the orientation
+    int N_t = key_times.size() - 2;
+    float theta = 0.0f;
+    bool change = false;
+    if (idx_last_key_time_boat < N_t && ((int) t) % ((int) key_times[N_t]) > key_times[idx_last_key_time_boat + 1]) {
+        int next = idx_last_key_time_boat + 2;
+        if (next >= N_t - 2) next = 1;
+        theta = -std::acos((key_positions[next][1] - key_positions[idx_last_key_time_boat + 1][1]) / norm(key_positions[next] - key_positions[idx_last_key_time_boat + 1]));
+        if ((key_positions[next][0] - key_positions[idx_last_key_time_boat + 1][0]) / norm(key_positions[next] - key_positions[idx_last_key_time_boat + 1]) < 0)
+            theta = - theta;
+        idx_last_key_time_boat++;
+        change = true;
+    }
+    if (idx_last_key_time_boat >= N_t - 2) {
+        idx_last_key_time_boat = 1;
+        theta = std::asin((key_positions[2][0] - key_positions[1][0]) / norm((key_positions[2] - key_positions[1])));
+    }
+
+    update_boat_direction(boat, p, theta, change);
+}
+
+void update_boat_direction(vcl::mesh_drawable &boat, vcl::vec3 position, float theta, bool change_orientation)
+{
+    /** *************************************************************  **/
+    /** Compute the (animated) transformations applied to the elements **/
+    /** *************************************************************  **/
+
+    if (change_orientation) {
+        boat.transform.rotate = rotation({ 0,0,1 }, theta);
+    }
+
+    boat.transform.translate = position;
 }

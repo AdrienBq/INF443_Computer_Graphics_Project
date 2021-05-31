@@ -600,7 +600,7 @@ std::vector<vcl::vec3> generate_positions_forest(int N, vcl::mesh& terrain) // l
     int i = 0;
     float dmin = 0.01f;
     int it = 0;
-    int Max_it = 2*N;
+    int Max_it = 5*N;
     bool b;
     while(i<N && it < Max_it){
         it++;

@@ -51,6 +51,7 @@ mesh_drawable column;
 mesh_drawable obelisque;
 hierarchy_mesh_drawable bird;
 mesh_drawable boat;
+mesh_drawable boat_drift;
 mesh_drawable fern;
 
 vcl::buffer<vcl::vec3> particules;
@@ -68,6 +69,7 @@ vcl::buffer<vec3> speeds_birds;
 const int nb_follower_birds = 10;
 
 std::vector<vec3> pos_forest;
+std::vector<vec3> pos_ferns;
 std::vector<vec3> pos_pyramids;
 std::vector<vec3> pos_columns;
 std::vector<vec3> pos_obelisques;
@@ -200,13 +202,15 @@ void initialize_data()
 
     // Boat
     initialize_boat(boat, 0.1f);
+    initialize_boat(boat_drift, 0.1f);
+
+    // Forest
+    int nbr_forest = 100;
+    pos_forest = generate_positions_forest(nbr_forest, terrain);
 
     // Fern
     initialize_fern(fern, 0.1f);
-
-    // Forest
-    int nbr_forest = 20;
-    pos_forest = generate_positions_forest(nbr_forest, terrain);
+    pos_ferns = generate_positions_forest(nbr_forest/20, terrain);
 
     pos_poteau = {5.5f,-7.5f,0.4f};
     initialize_corde(boat.transform.translate,pos_poteau, particules, vitesses, L0_array, raideurs);
@@ -280,21 +284,21 @@ void display_frame()
     }
 
     // forest
-    /*for(int i=0; i<pos_forest.size();i++){
-        if(i<pos_forest.size()/2){
-            palm_tree["trunk"].transform.translate = pos_forest[i];
-            palm_tree.update_local_to_global_coordinates();
-            vcl::draw(palm_tree, scene);
-        }
-        else {
-            fern.transform.translate = pos_forest[i];
-            vcl::draw(fern, scene);
-        }
-    }*/
-    //vcl::draw(boat, scene);
+    for(int i=0; i<pos_forest.size();i++){
+        palm_tree["trunk"].transform.translate = pos_forest[i];
+        palm_tree.update_local_to_global_coordinates();
+        vcl::draw(palm_tree, scene);
+    }
+    for(int i=0; i<pos_ferns.size();i++){
+        fern.transform.translate = pos_ferns[i];
+        vcl::draw(fern, scene);
+    }
+
+    update_boat_drift(boat_drift, t);
+    vcl::draw(boat_drift, scene);
 
 	update_leader_bird(bird, t, dt, key_positions_bird, key_times_bird, speeds_birds);
-	vcl::draw(bird, scene);
+    //vcl::draw(bird, scene);
 	for (int i = 0; i < nbr_it; i++) {
 		update_follower_birds(bird, follower_birds, speeds_birds, t, dt, 0.0001f, 0.0001f, 0.005f);
 	}
