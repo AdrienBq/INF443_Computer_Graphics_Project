@@ -6,7 +6,7 @@ using namespace vcl;
 
 mesh create_tree_trunk_cylinder(float radius, float height)
 {
-    mesh m;
+    /*mesh m;
     const unsigned int N = 100;
     m.position.resize(N);
     m.uv.resize(N);
@@ -39,8 +39,8 @@ mesh create_tree_trunk_cylinder(float radius, float height)
         m.connectivity.push_back({ N - 1, 0, 1 });
     }
 
-    m.fill_empty_field();
-    return m;
+    m.fill_empty_field*/
+    return mesh_primitive_cylinder(radius, { 0,0,0 }, { 0,0,height }, 10, 20, true);
 }
 
 
@@ -104,7 +104,7 @@ vcl::hierarchy_mesh_drawable create_palm_tree(float size, int N_leafs, float spr
 
     // Foliage
     float da = 2 * 3.14 / N_leafs;
-    mesh foliage = create_palm_leaf(width, m, { spreading, 0.0f, 1.0f }, t_max);
+    mesh foliage = create_palm_leaf(width, m, { spreading, 0.0f, 1.0f }, t_max, 50);
     for (int i = 1; i < 10; i++) {
         foliage.push_back(create_palm_leaf(width, m, { spreading * std::cos(i * da), spreading * std::sin(i * da), 1.0f }, t_max));
     }
@@ -291,7 +291,7 @@ void rule_trunk(std::vector<vcl::mesh> &list_trunks, std::vector<vcl::vec3> list
 
 vcl::mesh create_fern(float leaf_radius, float leaf_width, float trunk_radius, float trunk_height, int detail_level, int N_leafs)
 {
-    const unsigned int N = 100;
+    const unsigned int N = 50;
     std::vector<vcl::mesh> list_leafs, list_trunks;
     std::vector<vcl::vec3> list_centers;
     std::vector<float> list_alphas;

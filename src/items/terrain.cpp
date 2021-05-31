@@ -19,7 +19,7 @@ float taille_berge3 = 0.5;
 
 vcl::mesh initialize_terrain()
 {
-    int const terrain_sample = 360;
+    int const terrain_sample = 100;
     mesh terrain = mesh_primitive_grid({-8,-15,0},{8,-15,0},{8,15,0},{-8,15,0},terrain_sample,15/8*terrain_sample);
     return terrain;
 }

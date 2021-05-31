@@ -1,10 +1,14 @@
 #include "bird.hpp"
 #include "helpers/interpolation.hpp"
+#include <cmath>
 
 using namespace vcl;
 
 
 bird_parameters default_bird;
+
+int idx_last_key_time;
+
 
 hierarchy_mesh_drawable create_bird(float const radius_head, vec3 const scale_body, float const width_wing, float const length_wing, float const radius_beak, float const height_beak) {
 
@@ -89,15 +93,23 @@ void initialize_leader_bird(vcl::hierarchy_mesh_drawable& bird, float size, vcl:
 	initialize_bird(bird, size);
 	key_positions.push_back(default_bird.key_positions);
 	key_times.push_back(default_bird.key_times);
-	bird["body"].transform.translate = key_positions[0];
+	idx_last_key_time = 1;
+	bird["body"].transform.translate = key_positions[1];
+	bird["body"].transform.rotate = rotation({ 0,0,1 }, std::asin((key_positions[2][0] - key_positions[1][0]) / norm((key_positions[2] - key_positions[1]))));
+	bird.update_local_to_global_coordinates();
 }
 
 
-void update_bird(vcl::hierarchy_mesh_drawable &bird, vcl::vec3 position, float t)
+void update_bird(vcl::hierarchy_mesh_drawable &bird, vcl::vec3 position, float t, float theta, bool change_orientation)
 {
 	/** *************************************************************  **/
 	/** Compute the (animated) transformations applied to the elements **/
 	/** *************************************************************  **/
+
+	if (change_orientation) {
+		bird["body"].transform.rotate = rotation({ 0,0,1 }, theta);
+		bird.update_local_to_global_coordinates();
+	}
 
 	bird["body"].transform.translate = position;
 
@@ -106,14 +118,14 @@ void update_bird(vcl::hierarchy_mesh_drawable &bird, vcl::vec3 position, float t
 	//bird["head"].transform.translate = {0,0.01f*(1+std::sin(2*3.14f*t)),0};
 
 	// Rotation of the shoulder-left around the x axis
-	bird["shoulder_left"].transform.rotate = rotation({ 0,1,0 }, 0.5f * std::sin(2 * 3.14f * (t - 0.4f)));
+	bird["shoulder_left"].transform.rotate = rotation({ 0,1,0 }, 0.5f * std::sin(2 * 3.14f * (t - 0.4f) / 1));
 	// Rotation of the arm-left around the y axis (delayed with respect to the shoulder)
-	bird["arm_bottom_left"].transform.rotate = rotation({ 0,1,0 }, std::sin(2 * 3.14f * (t - 0.6f)));
+	bird["arm_bottom_left"].transform.rotate = rotation({ 0,1,0 }, std::sin(2 * 3.14f * (t - 0.6f) / 1));
 
 	// Rotation of the shoulder-right around the y axis
-	bird["shoulder_right"].transform.rotate = rotation({ 0,-1,0 }, 0.5f * std::sin(2 * 3.14f * (t - 0.4f)));
+	bird["shoulder_right"].transform.rotate = rotation({ 0,-1,0 }, 0.5f * std::sin(2 * 3.14f * (t - 0.4f) / 1));
 	// Rotation of the arm-right around the y axis (delayed with respect to the shoulder)
-	bird["arm_bottom_right"].transform.rotate = rotation({ 0,-1,0 }, std::sin(2 * 3.14f * (t - 0.6f)));
+	bird["arm_bottom_right"].transform.rotate = rotation({ 0,-1,0 }, std::sin(2 * 3.14f * (t - 0.6f) / 1));
 
 	// update the global coordinates
 	bird.update_local_to_global_coordinates();
@@ -125,7 +137,24 @@ void update_leader_bird(vcl::hierarchy_mesh_drawable& bird, float t, float dt, v
 	// Compute the interpolated position
 	vec3 const p = interpolation(t, key_positions, key_times);
 	speeds[speeds.size() - 1] = (p - bird["body"].transform.translate) / dt;
-	update_bird(bird, p, t);
+	// Compute the orientation
+	int N_t = key_times.size() - 2;
+	float theta = 0.0f;
+	bool change = false;
+	if (idx_last_key_time < N_t && ((int) t) % ((int) key_times[N_t]) > key_times[idx_last_key_time + 1]) {
+		int next = idx_last_key_time + 2;
+		if (next >= N_t - 2) next = 1;
+		theta = -std::acos((key_positions[next][1] - key_positions[idx_last_key_time + 1][1]) / norm(key_positions[next] - key_positions[idx_last_key_time + 1]));
+		if ((key_positions[next][0] - key_positions[idx_last_key_time + 1][0]) / norm(key_positions[next] - key_positions[idx_last_key_time + 1]) < 0)
+			theta = - theta;
+		idx_last_key_time++;
+		change = true;
+	}
+	if (idx_last_key_time >= N_t - 2) {
+		idx_last_key_time = 1;
+		theta = std::asin((key_positions[2][0] - key_positions[1][0]) / norm((key_positions[2] - key_positions[1])));
+	}
+	update_bird(bird, p, t, theta, change);
 }
 
 
