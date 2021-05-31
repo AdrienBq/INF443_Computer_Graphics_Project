@@ -19,6 +19,7 @@ scene_environment scene;
 user_interaction_parameters user;
 
 
+void keyboard_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_move_callback(GLFWwindow* window, double xpos, double ypos);
 void window_size_callback(GLFWwindow* window, int width, int height);
 
@@ -77,8 +78,6 @@ vcl::buffer<float> rotation_palm_tree;
 
 
 
-
-
 int main(int, char* argv[])
 {
 	std::cout << "Run " << argv[0] << std::endl;
@@ -89,7 +88,8 @@ int main(int, char* argv[])
 	std::cout << opengl_info_display() << std::endl;;
 
 	imgui_init(window);
-	glfwSetCursorPosCallback(window, mouse_move_callback);
+    glfwSetCursorPosCallback(window, mouse_move_callback);
+    glfwSetKeyCallback(window, keyboard_callback);
 	glfwSetWindowSizeCallback(window, window_size_callback);
 
 	std::cout << "Initialize data ..." << std::endl;
@@ -100,7 +100,7 @@ int main(int, char* argv[])
 	glEnable(GL_DEPTH_TEST);
 	while (!glfwWindowShouldClose(window))
 	{
-		scene.light = scene.camera.position();
+        scene.light = scene.camera_head.position();
 		user.fps_record.update();
 
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -112,8 +112,8 @@ int main(int, char* argv[])
 			glfwSetWindowTitle(window, title.c_str());
 		}
 
-		ImGui::Begin("GUI", NULL, ImGuiWindowFlags_AlwaysAutoResize);
-		user.cursor_on_gui = ImGui::IsAnyWindowFocused();
+        ImGui::Begin("GUI",NULL,ImGuiWindowFlags_AlwaysAutoResize);
+        user.cursor_on_gui = ImGui::GetIO().WantCaptureMouse;
 
         //if (user.gui.display_frame) draw(user.global_frame, scene);
 
@@ -149,8 +149,11 @@ void initialize_data()
 
 	user.global_frame = mesh_drawable(mesh_primitive_frame());
 	user.gui.display_frame = false;
-	scene.camera.distance_to_center = 2.5f;
-	scene.camera.look_at({ -0.5f,2.5f,1 }, { 0,0,0 }, { 0,0,1 });
+    //scene.camera.distance_to_center = 2.5f;
+    //scene.camera.look_at({ -0.5f,2.5f,1 }, { 0,0,0 }, { 0,0,1 });
+
+    scene.camera_head.position_camera = {0.0f, -15.0f, 2.0f};
+    scene.camera_head.manipulator_rotate_roll_pitch_yaw(0,0,pi/2.0f);
 
     perlin_noise_parameters parameters = get_noise_params();
 
@@ -215,14 +218,14 @@ void initialize_data()
     initialize_boat(boat_drift, 0.1f);
 
     // Forest
-    int nbr_forest = 100;
+    int nbr_forest = 200;
     pos_forest = generate_positions_forest(nbr_forest, terrain);
     for (int i = 0; i < pos_forest.size(); i++)
         rotation_palm_tree.push_back(static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2 * 3.14f))));
 
     // Fern
     initialize_fern(fern, 0.1f);
-    pos_ferns = generate_positions_forest(nbr_forest/20, terrain);
+    pos_ferns = generate_positions_forest(nbr_forest/40, terrain);
 
     pos_poteau = { 5.5f,-7.5f,0.1f };
     initialize_corde(boat.transform.translate + get_translation_to_bow(0.1f), pos_poteau, particules, vitesses, L0_array, raideurs);
@@ -304,10 +307,10 @@ void display_frame()
         palm_tree.update_local_to_global_coordinates();
         vcl::draw(palm_tree, scene);
     }
-    for(int i=0; i<pos_ferns.size();i++){
+    /*for(int i=0; i<pos_ferns.size();i++){
         fern.transform.translate = pos_ferns[i];
         vcl::draw(fern, scene);
-    }
+    }*/
 
     update_boat_drift(boat_drift, t);
     vcl::draw(boat_drift, scene);
@@ -338,6 +341,17 @@ void display_frame()
         segments.update({particules[i-1],particules[i]});
         draw(segments, scene);
     }
+
+    // Handle camera fly-through
+    scene.camera_head.position_camera += user.speed*0.1f*dt*scene.camera_head.front();
+    if(user.keyboard_state.up)
+        scene.camera_head.manipulator_rotate_roll_pitch_yaw(0,-0.5f*dt,0);
+    if(user.keyboard_state.down)
+        scene.camera_head.manipulator_rotate_roll_pitch_yaw(0, 0.5f*dt,0);
+    if(user.keyboard_state.right)
+        scene.camera_head.manipulator_rotate_roll_pitch_yaw(0.7f*dt,0,0);
+    if(user.keyboard_state.left)
+        scene.camera_head.manipulator_rotate_roll_pitch_yaw(-0.7f*dt,0,0);
 }
 
 
@@ -356,10 +370,10 @@ void window_size_callback(GLFWwindow*, int width, int height)
 {
 	glViewport(0, 0, width, height);
 	float const aspect = width / static_cast<float>(height);
-    float const fov = 50.0f * pi / 180.0f;
+    float const fov = 10.0f * pi / 180.0f;
 	float const z_min = 0.1f;
 	float const z_max = 100.0f;
-	scene.projection = projection_perspective(fov, aspect, z_min, z_max);
+    scene.projection = projection_perspective(fov, aspect, z_min, z_max);
 }
 
 void mouse_move_callback(GLFWwindow* window, double xpos, double ypos)
@@ -381,3 +395,27 @@ void mouse_move_callback(GLFWwindow* window, double xpos, double ypos)
 	user.mouse_prev = p1;
 }
 
+// Store keyboard state
+// left-right / up-down key
+void keyboard_callback(GLFWwindow* , int key, int , int action, int )
+{
+    if(key == GLFW_KEY_UP){
+        if(action == GLFW_PRESS) user.keyboard_state.up = true;
+        if(action == GLFW_RELEASE) user.keyboard_state.up = false;
+    }
+
+    if(key == GLFW_KEY_DOWN){
+        if(action == GLFW_PRESS) user.keyboard_state.down = true;
+        if(action == GLFW_RELEASE) user.keyboard_state.down = false;
+    }
+
+    if(key == GLFW_KEY_LEFT){
+        if(action == GLFW_PRESS) user.keyboard_state.left = true;
+        if(action == GLFW_RELEASE) user.keyboard_state.left = false;
+    }
+
+    if(key == GLFW_KEY_RIGHT){
+        if(action == GLFW_PRESS) user.keyboard_state.right = true;
+        if(action == GLFW_RELEASE) user.keyboard_state.right = false;
+    }
+}
