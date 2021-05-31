@@ -81,7 +81,8 @@ void initialize_corde(vcl::vec3 pos_bateau, vcl::vec3& pos_poteau, vcl::buffer<v
 
     raideurs = {};
     for(int i=0; i<NbrSpring; i++){
-        raideurs.push_back(1);
+        raideurs.push_back(0.01);
+
     }
 }
 

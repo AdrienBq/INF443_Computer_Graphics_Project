@@ -48,6 +48,7 @@ mesh_drawable cube_map;
 mesh_drawable pyramid;
 hierarchy_mesh_drawable palm_tree;
 mesh_drawable column;
+mesh_drawable obelisque;
 hierarchy_mesh_drawable bird;
 mesh_drawable boat;
 mesh_drawable fern;
@@ -58,12 +59,19 @@ vcl::buffer<float> L0_array;
 vcl::buffer<float> raideurs;
 vec3 pos_poteau;
 mesh_drawable sphere;
+segments_drawable segments;
 
 vcl::buffer<vec3> key_positions_bird;
 vcl::buffer<float> key_times_bird;
 vcl::buffer<vec3> follower_birds;
 vcl::buffer<vec3> speeds_birds;
 const int nb_follower_birds = 10;
+
+std::vector<vec3> pos_forest;
+std::vector<vec3> pos_pyramids;
+std::vector<vec3> pos_columns;
+std::vector<vec3> pos_obelisques;
+
 
 
 
@@ -152,8 +160,7 @@ void initialize_data()
 
     // Create the terrain
     terrain = create_terrain();
-    /*terrain_visual = mesh_drawable(terrain);
-    update_terrain(terrain, terrain_visual, parameters);*/
+    //terrain_visual = mesh_drawable(terrain);
     terrain_herbe = mesh_drawable(terrain);
     terrain_water = mesh_drawable(terrain, shader_environment_map, texture_cubemap);
     terrain_berge_bas = mesh_drawable(terrain);
@@ -161,22 +168,30 @@ void initialize_data()
     terrain_berge_haut = mesh_drawable(terrain);
     terrain_dune = mesh_drawable(terrain);
     update_terrain(terrain,terrain_herbe,terrain_berge_bas, terrain_berge_milieu, terrain_berge_haut,terrain_dune,terrain_water, parameters, t, timer.t_max);
+    //update_terrain2(terrain,terrain_visual,terrain_berge_bas, parameters, t, timer.t_max);
 
     // Texture Images load and association
     terrain_dune.texture = texture("pictures/texture_sable.png");
-    terrain_herbe.texture = texture("pictures/texture_grass.png");
+    //terrain_herbe.texture = texture("pictures/texture_grass.png");
+    //terrain_visual.texture = texture("pictures/texture_sable.png");
 
 	// Pyramid
 	initialize_pyramid(pyramid, 0.01f);
+    pos_pyramids = generate_positions_pyramids(terrain, parameters);
 
 	// Palm tree
-	initialize_palm_tree(palm_tree, 1.0f);
+    initialize_palm_tree(palm_tree, 0.1f);
 
     // column
-    initialize_column_cyl(column, 1.0f);
+    initialize_column_cyl(column, 0.1f);
+    pos_columns = generate_positions_columns(terrain, parameters);
+
+    //obelisque
+    initialize_obelisque(obelisque, 0.1f);
+    pos_obelisques = generate_positions_obelisque(terrain, parameters);
 
 	// Birds
-	initialize_leader_bird(bird, 1.0f, key_positions_bird, key_times_bird);
+    initialize_leader_bird(bird, 0.1f, key_positions_bird, key_times_bird);
 	for (int i = 0; i < nb_follower_birds; i++) {
 		follower_birds.push_back(key_positions_bird[0] + 1.0f*vec3(static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)), static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)), static_cast <float> (rand()) / (static_cast <float> (RAND_MAX))));
 		speeds_birds.push_back({ 0.1f, 0.1f, 0.1f });
@@ -184,14 +199,18 @@ void initialize_data()
 	speeds_birds.push_back({ 0.1f, 0.1f, 0.1f });
 
     // Boat
-    initialize_boat(boat, 1.0f);
+    initialize_boat(boat, 0.1f);
 
     // Fern
-    initialize_fern(fern, 1.0f);
+    initialize_fern(fern, 0.1f);
 
-    pos_poteau = {4.0f,-6.0f,evaluate_terrain2(-1.0/16+0.5f,-13.0/30+0.5, terrain)[2]+0.1f};
+    // Forest
+    int nbr_forest = 20;
+    pos_forest = generate_positions_forest(nbr_forest, terrain);
+
+    pos_poteau = {5.5f,-7.5f,0.4f};
     initialize_corde(boat.transform.translate,pos_poteau, particules, vitesses, L0_array, raideurs);
-    sphere = mesh_drawable( mesh_primitive_sphere(0.05f));
+    sphere = mesh_drawable( mesh_primitive_sphere(0.01f));
 
 	// Set timer bounds
 	//  You should adapt these extremal values to the type of interpolation
@@ -200,7 +219,6 @@ void initialize_data()
 	timer.t_max = key_times_bird[N - 2];  // Ends the timer at the last time of the keyframe
 	timer.t = timer.t_min;
 }
-
 
 
 void display_frame()
@@ -223,12 +241,9 @@ void display_frame()
     update |= ImGui::SliderFloat("Height", &parameters.terrain_height, 0.1f, 1.5f);
 
     if(update){// if any slider has been changed - then update the terrain
-        update_terrain_herbe(terrain, terrain_herbe, parameters);
-        update_terrain_berge_bas(terrain, terrain_berge_bas, parameters);
-        update_terrain_berge_haut(terrain, terrain_berge_haut, parameters);
-        update_terrain_dune(terrain, terrain_dune, parameters);
-        update_terrain_water(terrain, terrain_water, parameters, t, timer.t_max);
-        //update_terrain(terrain, terrain_visual, parameters);
+        update_terrain(terrain,terrain_herbe,terrain_berge_bas, terrain_berge_milieu, terrain_berge_haut,terrain_dune,terrain_water, parameters, t, timer.t_max);
+        //update_terrain2(terrain,terrain_visual,terrain_berge_bas, parameters, t, timer.t_max);
+
     }
 
     update_terrain_water(terrain, terrain_water, parameters, t, timer.t_max);
@@ -243,9 +258,40 @@ void display_frame()
     //draw(terrain_herbe, scene);
     vcl::draw(terrain_dune, scene);
     draw_with_cubemap(terrain_water, scene);
-	vcl::draw(pyramid, scene);
-	vcl::draw(palm_tree, scene);
-	vcl::draw(column, scene);
+    vcl::draw(palm_tree, scene);
+
+
+    // pyramids
+    for(int i=0; i<pos_pyramids.size();i++){
+        pyramid.transform.translate = pos_pyramids[i];
+        vcl::draw(pyramid, scene);
+    }
+
+    // columns
+    for(int i=0; i<pos_columns.size();i++){
+        column.transform.translate = pos_columns[i];
+        vcl::draw(column, scene);
+    }
+
+    // obelisques
+    for(int i=0; i<pos_obelisques.size();i++){
+        obelisque.transform.translate = pos_obelisques[i];
+        vcl::draw(obelisque, scene);
+    }
+
+    // forest
+    /*for(int i=0; i<pos_forest.size();i++){
+        if(i<pos_forest.size()/2){
+            palm_tree["trunk"].transform.translate = pos_forest[i];
+            palm_tree.update_local_to_global_coordinates();
+            vcl::draw(palm_tree, scene);
+        }
+        else {
+            fern.transform.translate = pos_forest[i];
+            vcl::draw(fern, scene);
+        }
+    }*/
+    //vcl::draw(boat, scene);
 
 	update_leader_bird(bird, t, dt, key_positions_bird, key_times_bird, speeds_birds);
 	vcl::draw(bird, scene);
@@ -257,13 +303,9 @@ void display_frame()
 		bird.update_local_to_global_coordinates();
 		vcl::draw(bird, scene);
 		std::cout << pos[0] << " " << pos[1] << " " << pos[2] << std::endl;
-	}
+    }
 
-
-    //vcl::draw(boat, scene);
-	vcl::draw(fern, scene);
-
-    update_pos_boat(boat, t);
+    update_pos_boat(boat, t, timer.t_max);
     for(int i=0; i<nbr_it; i++){
         update_pos_rope(boat.transform.translate, particules,vitesses,L0_array,raideurs,terrain,dt);
     }
@@ -273,6 +315,10 @@ void display_frame()
         sphere.transform.translate = particules[i];
         draw(sphere, scene);
     }
+    /*for(int i=1; i<10; i++){
+        segments.update({particules[i],particules[i-1]});
+        draw(segments, scene);
+    }*/
 }
 
 

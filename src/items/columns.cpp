@@ -77,3 +77,56 @@ void initialize_column_cyl(vcl::mesh_drawable& column, float size)
     column = mesh_drawable(create_column_cyl(size));
     column.transform.translate.x = 6.0f;
 }
+
+vcl::mesh create_obelisque(float base, float height)
+{
+    vcl::mesh obelisque;
+    obelisque.position = { {-base / 2, -base / 2, 0.0f},
+                         {-base / 2, base / 2, 0.0f},
+                         {base / 2, base / 2, 0.0f},
+                         {base / 2, -base / 2, 0.0f},
+                         {-base / 4, -base / 4, height},
+                         {-base / 4, base / 4, height},
+                         {base / 4, base / 4, height},
+                         {base / 4, -base / 4, height},
+                         {0.0f, 0.0f, height+height/10} };
+
+    obelisque.uv = { {0.0f, 1.0f},
+                    {1.0f, 1.0f},
+                    {0.0f, 1.0f},
+                    {1.0f, 1.0f},
+                    {0.0f, 1.0f},
+                    {1.0f, 1.0f},
+                    {0.0f, 1.0f},
+                    {1.0f, 1.0f},
+                    {0.0f, 0.0f} };
+
+    obelisque.connectivity.push_back({ 0,1,2 });
+    obelisque.connectivity.push_back({ 2,3,0 });
+    obelisque.connectivity.push_back({ 0,1,5 });
+    obelisque.connectivity.push_back({ 5,4,0 });
+    obelisque.connectivity.push_back({ 1,2,6 });
+    obelisque.connectivity.push_back({ 6,5,1 });
+    obelisque.connectivity.push_back({ 2,3,7 });
+    obelisque.connectivity.push_back({ 7,6,2 });
+    obelisque.connectivity.push_back({ 3,0,4 });
+    obelisque.connectivity.push_back({ 4,7,3 });
+    obelisque.connectivity.push_back({ 4,5,8 });
+    obelisque.connectivity.push_back({ 5,6,8 });
+    obelisque.connectivity.push_back({ 6,7,8 });
+    obelisque.connectivity.push_back({ 7,4,8 });
+
+    obelisque.fill_empty_field();
+
+    return obelisque;
+}
+
+
+void initialize_obelisque(vcl::mesh_drawable &obelisque, float size)
+{
+    obelisque = mesh_drawable(create_obelisque(size * 2.0f, size * 10.0f));
+    obelisque.transform.translate.z = 1.0f;
+    obelisque.transform.translate.x = -4.0f;
+    obelisque.transform.translate.y = -4.0f;
+    obelisque.shading.color = { 0.8f, 0.7f, 0.7f }; // Yellow
+}
