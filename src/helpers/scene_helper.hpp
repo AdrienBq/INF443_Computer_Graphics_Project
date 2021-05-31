@@ -5,7 +5,8 @@
 
 struct scene_environment
 {
-	vcl::camera_around_center camera;
+    vcl::camera_around_center camera;
+    vcl::camera_head camera_head;
 	vcl::mat4 projection;
 	vcl::mat4 projection_inverse;
 	vcl::vec3 light;
@@ -14,6 +15,13 @@ struct scene_environment
 struct picking_structure {
 	bool active; 
 	int index;
+};
+
+struct keyboard_state_parameters{
+    bool left  = false;
+    bool right = false;
+    bool up    = false;
+    bool down  = false;
 };
 
 struct gui_parameters {
@@ -33,6 +41,9 @@ struct user_interaction_parameters {
 	gui_parameters gui;
 	bool cursor_on_gui;
 	picking_structure picking;
+    bool display_frame = true;
+    keyboard_state_parameters keyboard_state;
+    float speed = 10.0f;
 };
 
 
