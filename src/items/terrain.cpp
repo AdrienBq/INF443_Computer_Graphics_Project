@@ -17,6 +17,13 @@ float taille_berge1 = 0.2;
 float taille_berge2 = 0.3;
 float taille_berge3 = 0.5;
 
+perlin_noise_parameters parameters;
+
+perlin_noise_parameters get_noise_params()
+{
+    return parameters;
+}
+
 vcl::mesh initialize_terrain()
 {
     int const terrain_sample = 100;

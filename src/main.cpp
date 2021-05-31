@@ -37,7 +37,6 @@ mesh_drawable terrain_berge_milieu;
 mesh_drawable terrain_berge_bas;
 mesh_drawable terrain_herbe;
 mesh_drawable terrain_dune;
-perlin_noise_parameters parameters;
 mesh_drawable sphere_current;    // sphere used to display the interpolated value
 mesh_drawable sphere_keyframe;   // sphere used to display the key positions of berges
 buffer<vec3> *courbes_fleuve;
@@ -137,13 +136,22 @@ void initialize_data()
 {
 	// Basic setups of shaders and camera
 	GLuint const shader_mesh = opengl_create_shader_program(opengl_shader_preset("mesh_vertex"), opengl_shader_preset("mesh_fragment"));
+    GLuint const shader_uniform_color = opengl_create_shader_program(opengl_shader_preset("single_color_vertex"), opengl_shader_preset("single_color_fragment"));
+    GLuint const texture_white = opengl_texture_to_gpu(image_raw{ 1,1,image_color_type::rgba,{255,255,255,255} });
 	mesh_drawable::default_shader = shader_mesh;
 	mesh_drawable::default_texture = opengl_texture_to_gpu(image_raw{ 1,1,image_color_type::rgba,{255,255,255,255} });
+    curve_drawable::default_shader = shader_uniform_color;
+    segments_drawable::default_shader = shader_uniform_color;
 
 	user.global_frame = mesh_drawable(mesh_primitive_frame());
 	user.gui.display_frame = false;
 	scene.camera.distance_to_center = 2.5f;
 	scene.camera.look_at({ -0.5f,2.5f,1 }, { 0,0,0 }, { 0,0,1 });
+
+    perlin_noise_parameters parameters = get_noise_params();
+
+    // For the rope
+    segments = segments_drawable({ {0,0,0},{1,0,0} });
 
     // Create skybox
     // Read shaders
@@ -176,7 +184,7 @@ void initialize_data()
     //terrain_visual.texture = texture("pictures/texture_sable.png");
 
 	// Pyramid
-	initialize_pyramid(pyramid, 0.01f);
+	initialize_pyramid(pyramid, 0.015f);
     pos_pyramids = generate_positions_pyramids(terrain, parameters);
 
 	// Palm tree
@@ -208,8 +216,8 @@ void initialize_data()
     int nbr_forest = 20;
     pos_forest = generate_positions_forest(nbr_forest, terrain);
 
-    pos_poteau = {5.5f,-7.5f,0.4f};
-    initialize_corde(boat.transform.translate,pos_poteau, particules, vitesses, L0_array, raideurs);
+    pos_poteau = {5.5f,-7.5f,0.1f};
+    initialize_corde(boat.transform.translate + get_translation_to_bow(0.1f),pos_poteau, particules, vitesses, L0_array, raideurs);
     sphere = mesh_drawable( mesh_primitive_sphere(0.01f));
 
 	// Set timer bounds
@@ -233,6 +241,8 @@ void display_frame()
 
     ImGui::Checkbox("Frame", &user.gui.display_frame);
     ImGui::Checkbox("Wireframe", &user.gui.display_wireframe);
+
+    perlin_noise_parameters parameters = get_noise_params();
 
     bool update = false;
     update |= ImGui::SliderFloat("Persistance", &parameters.persistency, 0.1f, 0.6f);
@@ -294,7 +304,7 @@ void display_frame()
     //vcl::draw(boat, scene);
 
 	update_leader_bird(bird, t, dt, key_positions_bird, key_times_bird, speeds_birds);
-	vcl::draw(bird, scene);
+	//vcl::draw(bird, scene);
 	for (int i = 0; i < nbr_it; i++) {
 		update_follower_birds(bird, follower_birds, speeds_birds, t, dt, 0.0001f, 0.0001f, 0.005f);
 	}
@@ -307,18 +317,18 @@ void display_frame()
 
     update_pos_boat(boat, t, timer.t_max);
     for(int i=0; i<nbr_it; i++){
-        update_pos_rope(boat.transform.translate, particules,vitesses,L0_array,raideurs,terrain,dt);
+        update_pos_rope(boat.transform.translate + get_translation_to_bow(0.1f), particules,vitesses,L0_array,raideurs,terrain,t,dt, timer.t_max);
     }
     vcl::draw(boat, scene);
     sphere.shading.color = {1,1,1};
     for(int i=0; i<10; i++){
         sphere.transform.translate = particules[i];
-        draw(sphere, scene);
+        //draw(sphere, scene);
     }
-    /*for(int i=1; i<10; i++){
-        segments.update({particules[i],particules[i-1]});
+    for(int i=1; i<10; i++){
+        segments.update({particules[i-1],particules[i]});
         draw(segments, scene);
-    }*/
+    }
 }
 
 

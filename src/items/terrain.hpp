@@ -12,6 +12,7 @@ struct perlin_noise_parameters
 
 
 // Initialize the mesh of the terrain
+perlin_noise_parameters get_noise_params();
 vcl::mesh initialize_terrain();
 vcl::mesh create_terrain();
 vcl::vec3 evaluate_terrain2(float u, float v, vcl::mesh& terrain);

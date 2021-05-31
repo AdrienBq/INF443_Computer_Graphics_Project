@@ -44,7 +44,6 @@ vcl::mesh create_column_cyl(float size)
     top_disc.position += {0.0f, 0.0f, h / 10};
     hat.push_back(hat_cyl);
     hat.push_back(top_disc);
-    hat.color.fill({ 0.3f, 0.3f, 0.3f });
 
     // column body
     std::vector<vcl::mesh> list_trunks;
@@ -57,12 +56,10 @@ vcl::mesh create_column_cyl(float size)
     }
     mesh column_body;
     for (auto trunk : list_trunks) {
-        trunk.color.fill({ 196.0 / 255, 128.0 / 255, 77.0 / 255 });
         column_body.push_back(trunk);
     }
     column_body.fill_empty_field();
     column_body.position += { 0.0f, 0.0f, h/10 }; // place hat at the top of the column
-    column_body.color.fill({ 0.3f, 0.3f, 0.3f });
 
     // entire column
     mesh column = hat;
@@ -76,6 +73,17 @@ void initialize_column_cyl(vcl::mesh_drawable& column, float size)
 {
     column = mesh_drawable(create_column_cyl(size));
     column.transform.translate.x = 6.0f;
+
+    // Load an image from a file
+    image_raw const im = image_load_png("pictures/texture_column_2.png");
+
+    // Send this image to the GPU, and get its identifier texture_image_id
+    GLuint const texture_image_id = opengl_texture_to_gpu(im,
+        GL_MIRRORED_REPEAT /*GL_CLAMP_TO_EDGE*/ /**GL_TEXTURE_WRAP_S*/,
+        GL_MIRRORED_REPEAT /*GL_CLAMP_TO_EDGE*/ /**GL_TEXTURE_WRAP_T*/);
+
+    // Associate the texture_image_id to the image texture used when displaying visual
+    column.texture = texture_image_id;
 }
 
 vcl::mesh create_obelisque(float base, float height)
@@ -91,13 +99,13 @@ vcl::mesh create_obelisque(float base, float height)
                          {base / 4, -base / 4, height},
                          {0.0f, 0.0f, height+height/10} };
 
-    obelisque.uv = { {0.0f, 1.0f},
+    obelisque.uv = { {8.0f, 8.0f},
+                    {8.0f, 8.0f},
+                    {8.0f, 8.0f},
+                    {8.0f, 8.0f},
                     {1.0f, 1.0f},
-                    {0.0f, 1.0f},
                     {1.0f, 1.0f},
-                    {0.0f, 1.0f},
                     {1.0f, 1.0f},
-                    {0.0f, 1.0f},
                     {1.0f, 1.0f},
                     {0.0f, 0.0f} };
 
@@ -128,5 +136,15 @@ void initialize_obelisque(vcl::mesh_drawable &obelisque, float size)
     obelisque.transform.translate.z = 1.0f;
     obelisque.transform.translate.x = -4.0f;
     obelisque.transform.translate.y = -4.0f;
-    obelisque.shading.color = { 0.8f, 0.7f, 0.7f }; // Yellow
+
+    // Load an image from a file
+    image_raw const im = image_load_png("pictures/texture_obelisque.png");
+
+    // Send this image to the GPU, and get its identifier texture_image_id
+    GLuint const texture_image_id = opengl_texture_to_gpu(im,
+        GL_MIRRORED_REPEAT /*GL_CLAMP_TO_EDGE*/ /**GL_TEXTURE_WRAP_S*/,
+        GL_MIRRORED_REPEAT /*GL_CLAMP_TO_EDGE*/ /**GL_TEXTURE_WRAP_T*/);
+
+    // Associate the texture_image_id to the image texture used when displaying visual
+    obelisque.texture = texture_image_id;
 }

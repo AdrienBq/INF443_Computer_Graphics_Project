@@ -1,12 +1,14 @@
 
 #include "corde.hpp"
+#include "terrain.hpp"
 
 using namespace vcl;
 
 
 int NbrSpring = 10;
-float const m  = 0.1f;        // particle mass
-float const mu = 0.01f;       // damping coefficient
+float const m  = 0.01f;        // particle mass
+float const mu = 0.1f;       // damping coefficient
+float const K = 1.0f;
 vcl::vec3 const g   = {0,0,-9.81f}; // gravity
 
 
@@ -20,7 +22,7 @@ vcl::vec3 spring_force(vcl::vec3 const& p_i, vcl::vec3 const& p_j, float L_0, fl
     return f;
 }
 
-void update_pos_rope(vcl::vec3 pos_bateau, vcl::buffer<vcl::vec3>& particules, vcl::buffer<vcl::vec3>& vitesses, vcl::buffer<float>& L0_array, vcl::buffer<float>& raideurs, vcl::mesh& terrain, float dt)
+void update_pos_rope(vcl::vec3 pos_bateau, vcl::buffer<vcl::vec3>& particules, vcl::buffer<vcl::vec3>& vitesses, vcl::buffer<float>& L0_array, vcl::buffer<float>& raideurs, vcl::mesh& terrain, float t, float dt, float tmax)
 {
     // Forces
     buffer<vec3> forces;
@@ -50,7 +52,7 @@ void update_pos_rope(vcl::vec3 pos_bateau, vcl::buffer<vcl::vec3>& particules, v
         particules[i] = particules[i] + dt * vitesses[i];
         float u = 0.5f + particules[i][0]/20;
         float v = 0.5f + particules[i][1]/20;
-        float h = evaluate_terrain2(u,v,terrain)[2];
+        float h = get_noise_params().terrain_height * 0.2 * noise_perlin({ u,v }, 6.0f, 0.6f, 2.25f - 0.3f*std::sin(3.14f * t/tmax));
         if(h>particules[i][2]) {
             particules[i][2] = h;
             vitesses[i][2] = - vitesses[i][2]*0.7;
@@ -76,12 +78,12 @@ void initialize_corde(vcl::vec3 pos_bateau, vcl::vec3& pos_poteau, vcl::buffer<v
         L0_array.push_back(std::sqrt((pos_bateau[0]-pos_poteau[0])*(pos_bateau[0]-pos_poteau[0])
                 + (pos_bateau[1]-pos_poteau[1])*(pos_bateau[1]-pos_poteau[1])
                 + (pos_bateau[2]-pos_poteau[2])*(pos_bateau[2]-pos_poteau[2]))
-                /NbrSpring);
+                /(2.0f * NbrSpring));
     }
 
     raideurs = {};
     for(int i=0; i<NbrSpring; i++){
-        raideurs.push_back(0.01);
+        raideurs.push_back(K);
 
     }
 }

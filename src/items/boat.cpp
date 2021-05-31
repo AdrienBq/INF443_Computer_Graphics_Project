@@ -63,8 +63,14 @@ void initialize_boat(vcl::mesh_drawable& boat, float size)
 	boat.texture = texture_image_id;
 }
 
+vcl::vec3 get_translation_to_bow(float size)
+{
+	float R = size * 0.6 * 7.0f, width = size * 2.0f, height = size * 1.0f;
+	return { 0, R * std::sin(std::acos(1 - width / R)), height };
+}
+
 
 void update_pos_boat(vcl::mesh_drawable& boat, float t, float tmax)
 {
-    boat.transform.translate = {4.0f+std::sin(20*pi*t/tmax)/4,-12.0f,0.08f};
+    boat.transform.translate = {4.0f+std::sin(20*pi*(t+ static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 0.01f))) /tmax)/10 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 0.002f)) - 0.001f,-10.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 0.002f)) - 0.001f,0.08f};
 }
