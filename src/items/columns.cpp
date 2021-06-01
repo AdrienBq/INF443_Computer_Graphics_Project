@@ -31,6 +31,7 @@ mesh create_disc(float radius)
     return disc;
 }
 
+// creation de la forme de la colonne a l'aide du disque ci-dessus
 vcl::mesh create_column_cyl(float size)
 {
     float const h = size * 4.0f; // trunk height
@@ -69,6 +70,8 @@ vcl::mesh create_column_cyl(float size)
 
     return column;
 }
+
+// initialisation du mesh_drawable des colonnes : taille, texture, position de depart
 void initialize_column_cyl(vcl::mesh_drawable& column, float size)
 {
     column = mesh_drawable(create_column_cyl(size));
@@ -86,6 +89,7 @@ void initialize_column_cyl(vcl::mesh_drawable& column, float size)
     column.texture = texture_image_id;
 }
 
+// creation de la forme de l'obelisque
 vcl::mesh create_obelisque(float base, float height)
 {
     vcl::mesh obelisque;
@@ -129,7 +133,7 @@ vcl::mesh create_obelisque(float base, float height)
     return obelisque;
 }
 
-
+// initialisation du mesh_drawable de l'obelisque : taille, texture, position de depart
 void initialize_obelisque(vcl::mesh_drawable &obelisque, float size)
 {
     obelisque = mesh_drawable(create_obelisque(size * 2.0f, size * 10.0f));

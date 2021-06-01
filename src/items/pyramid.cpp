@@ -3,6 +3,7 @@
 using namespace vcl;
 
 
+// creation de la forme de la pyramide
 vcl::mesh create_pyramid(float base, float height)
 {
 	vcl::mesh pyramid;
@@ -30,7 +31,7 @@ vcl::mesh create_pyramid(float base, float height)
 	return pyramid;
 }
 
-
+// initialisation du mesh_drawable : taille, texture, position de depart
 void initialize_pyramid(vcl::mesh_drawable &pyramid, float size)
 {
 	pyramid = mesh_drawable(create_pyramid(size * 200.0f, size * 130.0f));
