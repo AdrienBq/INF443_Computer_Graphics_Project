@@ -153,7 +153,7 @@ void initialize_data()
     //scene.camera.look_at({ -0.5f,2.5f,1 }, { 0,0,0 }, { 0,0,1 });
 
     scene.camera_head.position_camera = {0.0f, -15.0f, 2.0f};
-    scene.camera_head.manipulator_rotate_roll_pitch_yaw(0,0,pi/2.0f);
+    scene.camera_head.manipulator_rotate_roll_pitch_yaw(-pi/2.0f,pi/2.0f,pi/2.0f);
 
     perlin_noise_parameters parameters = get_noise_params();
 
@@ -224,8 +224,8 @@ void initialize_data()
         rotation_palm_tree.push_back(static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2 * 3.14f))));
 
     // Fern
-    initialize_fern(fern, 0.1f);
-    pos_ferns = generate_positions_forest(nbr_forest/40, terrain);
+    initialize_fern(fern, 0.4f);
+    pos_ferns = generate_positions_ferns(terrain, parameters);
 
     pos_poteau = { 5.5f,-7.5f,0.1f };
     initialize_corde(boat.transform.translate + get_translation_to_bow(0.1f), pos_poteau, particules, vitesses, L0_array, raideurs);
@@ -300,13 +300,15 @@ void display_frame()
         vcl::draw(obelisque, scene);
     }
 
-    // forest
+    // palm forest
     for(int i=0; i<pos_forest.size();i++){
         palm_tree["trunk"].transform.translate = pos_forest[i];
         palm_tree["trunk"].transform.rotate = rotation({ 0,0,1 }, rotation_palm_tree[i]);
         palm_tree.update_local_to_global_coordinates();
         vcl::draw(palm_tree, scene);
     }
+
+    // ferns
     /*for(int i=0; i<pos_ferns.size();i++){
         fern.transform.translate = pos_ferns[i];
         vcl::draw(fern, scene);
@@ -345,13 +347,17 @@ void display_frame()
     // Handle camera fly-through
     scene.camera_head.position_camera += user.speed*0.1f*dt*scene.camera_head.front();
     if(user.keyboard_state.up)
-        scene.camera_head.manipulator_rotate_roll_pitch_yaw(0,-0.5f*dt,0);
+        scene.camera_head.manipulator_rotate_roll_pitch_yaw(0,1.0f*dt,0);
     if(user.keyboard_state.down)
-        scene.camera_head.manipulator_rotate_roll_pitch_yaw(0, 0.5f*dt,0);
+        scene.camera_head.manipulator_rotate_roll_pitch_yaw(0, -1.0f*dt,0);
     if(user.keyboard_state.right)
-        scene.camera_head.manipulator_rotate_roll_pitch_yaw(0.7f*dt,0,0);
+        scene.camera_head.manipulator_rotate_roll_pitch_yaw(0,0,-1.0f*dt);
     if(user.keyboard_state.left)
-        scene.camera_head.manipulator_rotate_roll_pitch_yaw(-0.7f*dt,0,0);
+        scene.camera_head.manipulator_rotate_roll_pitch_yaw(0,0,1.0f*dt);
+    if(user.keyboard_state.rot_d)
+        scene.camera_head.manipulator_rotate_roll_pitch_yaw(-1.0f*dt,0,0);
+    if(user.keyboard_state.rot_g)
+        scene.camera_head.manipulator_rotate_roll_pitch_yaw(1.0f*dt,0,0);
 }
 
 
@@ -362,7 +368,8 @@ void display_interface()
 	ImGui::SliderFloat("Time scale", &timer.scale, 0.0f, 2.0f);
 	ImGui::Checkbox("Frame", &user.gui.display_frame);
 	ImGui::Checkbox("Surface", &user.gui.display_surface);
-	ImGui::Checkbox("Wireframe", &user.gui.display_wireframe);
+    ImGui::Checkbox("Wireframe", &user.gui.display_wireframe);
+    ImGui::SliderFloat("Speed", &user.speed, 0.0f, 100.0f);
 }
 
 
@@ -370,7 +377,7 @@ void window_size_callback(GLFWwindow*, int width, int height)
 {
 	glViewport(0, 0, width, height);
 	float const aspect = width / static_cast<float>(height);
-    float const fov = 10.0f * pi / 180.0f;
+    float const fov = 50.0f * pi / 180.0f;
 	float const z_min = 0.1f;
 	float const z_max = 100.0f;
     scene.projection = projection_perspective(fov, aspect, z_min, z_max);
@@ -417,5 +424,15 @@ void keyboard_callback(GLFWwindow* , int key, int , int action, int )
     if(key == GLFW_KEY_RIGHT){
         if(action == GLFW_PRESS) user.keyboard_state.right = true;
         if(action == GLFW_RELEASE) user.keyboard_state.right = false;
+    }
+
+    if(key == GLFW_KEY_KP_1){
+        if(action == GLFW_PRESS) user.keyboard_state.rot_d = true;
+        if(action == GLFW_RELEASE) user.keyboard_state.rot_d = false;
+    }
+
+    if(key == GLFW_KEY_KP_2){
+        if(action == GLFW_PRESS) user.keyboard_state.rot_g = true;
+        if(action == GLFW_RELEASE) user.keyboard_state.rot_g = false;
     }
 }

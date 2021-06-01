@@ -54,6 +54,7 @@ GLuint texture(const std::string& filename);
 
 std::vector<vcl::vec3> generate_positions_forest(int N, vcl::mesh& terrain);
 std::vector<vcl::vec3> generate_positions_pyramids(vcl::mesh& terrain, perlin_noise_parameters const& parameters);
+std::vector<vcl::vec3> generate_positions_ferns(vcl::mesh& terrain, perlin_noise_parameters const& parameters);
 std::vector<vcl::vec3> generate_positions_columns(vcl::mesh& terrain, perlin_noise_parameters const& parameters);
 std::vector<vcl::vec3> generate_positions_columns2(vcl::mesh& terrain, perlin_noise_parameters const& parameters);
 std::vector<vcl::vec3> generate_positions_obelisque(vcl::mesh& terrain, perlin_noise_parameters const& parameters);

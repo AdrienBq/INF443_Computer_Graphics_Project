@@ -22,6 +22,8 @@ struct keyboard_state_parameters{
     bool right = false;
     bool up    = false;
     bool down  = false;
+    bool rot_d  = false;
+    bool rot_g  = false;
 };
 
 struct gui_parameters {
@@ -43,7 +45,7 @@ struct user_interaction_parameters {
 	picking_structure picking;
     bool display_frame = true;
     keyboard_state_parameters keyboard_state;
-    float speed = 10.0f;
+    float speed = 2.0f;
 };
 
 

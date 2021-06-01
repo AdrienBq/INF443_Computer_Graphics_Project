@@ -645,10 +645,16 @@ std::vector<vcl::vec3> generate_positions_forest(int N, vcl::mesh& terrain) // l
 std::vector<vcl::vec3> generate_positions_pyramids(vcl::mesh& terrain, perlin_noise_parameters const& parameters)
 {
     std::vector<vcl::vec3> tab;
-    tab.push_back({6.3f,-6.2f,parameters.terrain_height*0.4 + evaluate_dune(7.0f,-6.5f, parameters.terrain_height)});
-    tab.push_back({3.4f,-4.5f,parameters.terrain_height*0.3 + evaluate_dune(4.0f,-6.0f, parameters.terrain_height)});
+    tab.push_back({6.3f,-6.2f,parameters.terrain_height*0.4 + evaluate_dune(7.0f,-6.2f, parameters.terrain_height)});
+    tab.push_back({3.4f,-4.5f,parameters.terrain_height*0.3 + evaluate_dune(3.4f,-4.5f, parameters.terrain_height)});
     tab.push_back({6.0f,0.0f,parameters.terrain_height*0.6 + evaluate_dune(6.0f,0.0f, parameters.terrain_height)});
     tab.push_back({2.0f,10.0f,parameters.terrain_height*0.7 + evaluate_dune(2.0f,10.0f, parameters.terrain_height)});
+    return tab;
+}
+std::vector<vcl::vec3> generate_positions_ferns(vcl::mesh& terrain, perlin_noise_parameters const& parameters)
+{
+    std::vector<vcl::vec3> tab;
+    tab.push_back({3.4f,-2.5f,parameters.terrain_height*0.7 + evaluate_dune(3.4f,-2.5f, parameters.terrain_height)});
     return tab;
 }
 
