@@ -34,7 +34,7 @@ vcl::mesh initialize_terrain()
 mesh create_terrain()
 {
     // Number of samples of the terrain is N x N
-    const unsigned int N = 100;
+    const unsigned int N = 200;
 
     mesh terrain; // temporary terrain storage (CPU only)
     terrain.position.resize(N*N);
@@ -654,7 +654,7 @@ std::vector<vcl::vec3> generate_positions_pyramids(vcl::mesh& terrain, perlin_no
 std::vector<vcl::vec3> generate_positions_ferns(vcl::mesh& terrain, perlin_noise_parameters const& parameters)
 {
     std::vector<vcl::vec3> tab;
-    tab.push_back({3.4f,-2.5f,parameters.terrain_height*0.7 + evaluate_dune(3.4f,-2.5f, parameters.terrain_height)});
+    tab.push_back({3.4f,-2.5f,parameters.terrain_height*0.7 + evaluate_dune(3.4f,-2.5f, parameters.terrain_height)+0.05f});
     return tab;
 }
 
