@@ -30,21 +30,21 @@ void display_frame();
 
 timer_interval timer;
 
+// mesh and mesh_drawables of terrain
 mesh terrain;
-mesh_drawable terrain_visual;
 mesh_drawable terrain_water;
 mesh_drawable terrain_berge_haut;
 mesh_drawable terrain_berge_milieu;
 mesh_drawable terrain_berge_bas;
 mesh_drawable terrain_herbe;
 mesh_drawable terrain_dune;
-mesh_drawable sphere_current;    // sphere used to display the interpolated value
-mesh_drawable sphere_keyframe;   // sphere used to display the key positions of berges
-buffer<vec3> *courbes_fleuve;
+
 float t = 0;
 
+// skybox
 mesh_drawable cube_map;
 
+// mesh_drawables of displayed objects
 mesh_drawable pyramid;
 hierarchy_mesh_drawable palm_tree;
 mesh_drawable column;
@@ -54,6 +54,7 @@ mesh_drawable boat;
 mesh_drawable boat_drift;
 mesh_drawable fern;
 
+// rope initialisation
 vcl::buffer<vcl::vec3> particules;
 vcl::buffer<vcl::vec3> vitesses;
 vcl::buffer<float> L0_array;
@@ -62,18 +63,21 @@ vec3 pos_poteau;
 mesh_drawable sphere;
 segments_drawable segments;
 
+// bird initialisation
 vcl::buffer<vec3> key_positions_bird;
 vcl::buffer<float> key_times_bird;
 vcl::buffer<vec3> follower_birds;
 vcl::buffer<vec3> speeds_birds;
 const int nb_follower_birds = 10;
 
+// positions on terrain to display objects
 std::vector<vec3> pos_forest;
 std::vector<vec3> pos_ferns;
 std::vector<vec3> pos_pyramids;
 std::vector<vec3> pos_columns;
 std::vector<vec3> pos_obelisques;
 
+// random rotations so that the trees do not look alike
 vcl::buffer<float> rotation_palm_tree;
 
 
@@ -148,10 +152,9 @@ void initialize_data()
     segments_drawable::default_shader = shader_uniform_color;
 
 	user.global_frame = mesh_drawable(mesh_primitive_frame());
-	user.gui.display_frame = false;
-    //scene.camera.distance_to_center = 2.5f;
-    //scene.camera.look_at({ -0.5f,2.5f,1 }, { 0,0,0 }, { 0,0,1 });
+    user.gui.display_frame = false;
 
+    // camera fly_mode
     scene.camera_head.position_camera = {0.0f, -15.0f, 2.0f};
     scene.camera_head.manipulator_rotate_roll_pitch_yaw(-pi/2.0f,pi/2.0f,pi/2.0f);
 
@@ -171,11 +174,9 @@ void initialize_data()
     // Cube used to display the skybox
     mesh cube = mesh_primitive_cube({0,0,0},2.0f);
     cube_map = mesh_drawable( cube, shader_skybox, texture_cubemap);
-    //rotate_terrain(cube, cube_map);
 
     // Create the terrain
     terrain = create_terrain();
-    //terrain_visual = mesh_drawable(terrain);
     terrain_herbe = mesh_drawable(terrain);
     terrain_water = mesh_drawable(terrain, shader_environment_map, texture_cubemap);
     terrain_berge_bas = mesh_drawable(terrain);
@@ -183,12 +184,9 @@ void initialize_data()
     terrain_berge_haut = mesh_drawable(terrain);
     terrain_dune = mesh_drawable(terrain);
     update_terrain(terrain,terrain_herbe,terrain_berge_bas, terrain_berge_milieu, terrain_berge_haut,terrain_dune,terrain_water, parameters, t, timer.t_max);
-    //update_terrain2(terrain,terrain_visual,terrain_berge_bas, parameters, t, timer.t_max);
 
     // Texture Images load and association
     terrain_dune.texture = texture("pictures/texture_sable.png");
-    //terrain_herbe.texture = texture("pictures/texture_grass.png");
-    //terrain_visual.texture = texture("pictures/texture_sable.png");
 
 	// Pyramid
 	initialize_pyramid(pyramid, 0.015f);
@@ -227,12 +225,12 @@ void initialize_data()
     initialize_fern(fern, 0.4f);
     pos_ferns = generate_positions_ferns(terrain, parameters);
 
+    // rope
     pos_poteau = { 5.5f,-7.5f,0.1f };
     initialize_corde(boat.transform.translate + get_translation_to_bow(0.1f), pos_poteau, particules, vitesses, L0_array, raideurs);
     sphere = mesh_drawable( mesh_primitive_sphere(0.01f));
 
-	// Set timer bounds
-	//  You should adapt these extremal values to the type of interpolation
+    // Set timer bounds
 	size_t const N = key_times_bird.size();
 	timer.t_min = key_times_bird[1];    // Start the timer at the first time of the keyframe
 	timer.t_max = key_times_bird[N - 2];  // Ends the timer at the last time of the keyframe
@@ -245,38 +243,20 @@ void display_frame()
 	// Update the current time
 	float t_prev = t;
     timer.update();
-    //timer.scale = 0.02f; // 0.02f
     t = timer.t;
     int nbr_it = 50;
     float dt = timer.scale*1/nbr_it;
 
-    ImGui::Checkbox("Frame", &user.gui.display_frame);
-    ImGui::Checkbox("Wireframe", &user.gui.display_wireframe);
-
     perlin_noise_parameters parameters = get_noise_params();
 
-    bool update = false;
-    update |= ImGui::SliderFloat("Persistance", &parameters.persistency, 0.1f, 0.6f);
-    update |= ImGui::SliderFloat("Frequency gain", &parameters.frequency_gain, 1.5f, 2.5f);
-    update |= ImGui::SliderInt("Octave", &parameters.octave, 1, 8);
-    update |= ImGui::SliderFloat("Height", &parameters.terrain_height, 0.1f, 1.5f);
-
-    if(update){// if any slider has been changed - then update the terrain
-        update_terrain(terrain,terrain_herbe,terrain_berge_bas, terrain_berge_milieu, terrain_berge_haut,terrain_dune,terrain_water, parameters, t, timer.t_max);
-        //update_terrain2(terrain,terrain_visual,terrain_berge_bas, parameters, t, timer.t_max);
-
-    }
-
+    // update the water
     update_terrain_water(terrain, terrain_water, parameters, t, timer.t_max);
 
     glDepthMask(GL_FALSE);
     draw_with_cubemap(cube_map, scene);
     glDepthMask(GL_TRUE);
 
-    //draw(terrain_visual, scene);
-    //draw(terrain_berge_bas, scene);
-    //draw(terrain_berge_haut, scene);
-    //draw(terrain_herbe, scene);
+    // draw water and only one mesh_drawable is enough
     vcl::draw(terrain_dune, scene);
     draw_with_cubemap(terrain_water, scene);
     vcl::draw(palm_tree, scene);
@@ -308,17 +288,19 @@ void display_frame()
         vcl::draw(palm_tree, scene);
     }
 
-    // ferns
+    // ferns : remove "/*" and "*/" to draw ferns
     /*for(int i=0; i<pos_ferns.size();i++){
         fern.transform.translate = pos_ferns[i];
         vcl::draw(fern, scene);
     }*/
 
+    // drifting boat
     update_boat_drift(boat_drift, t);
     vcl::draw(boat_drift, scene);
 
+    // birds
 	update_leader_bird(bird, t, dt, key_positions_bird, key_times_bird, speeds_birds);
-	//vcl::draw(bird, scene);
+    //vcl::draw(bird, scene);   // remove comment to draw the leading bird
 	for (int i = 0; i < nbr_it; i++) {
 		update_follower_birds(bird, follower_birds, speeds_birds, t, dt, 0.0001f, 0.0001f, 0.005f);
 	}
@@ -329,6 +311,7 @@ void display_frame()
 		std::cout << pos[0] << " " << pos[1] << " " << pos[2] << std::endl;
     }
 
+    // attached boat
     update_pos_boat(boat, t, timer.t_max);
     for(int i=0; i<nbr_it; i++){
         update_pos_rope(boat.transform.translate + get_translation_to_bow(0.1f), particules,vitesses,L0_array,raideurs,terrain,t,dt, timer.t_max);
@@ -369,7 +352,7 @@ void display_interface()
 	ImGui::Checkbox("Frame", &user.gui.display_frame);
 	ImGui::Checkbox("Surface", &user.gui.display_surface);
     ImGui::Checkbox("Wireframe", &user.gui.display_wireframe);
-    ImGui::SliderFloat("Speed", &user.speed, 0.0f, 100.0f);
+    ImGui::SliderFloat("Speed", &user.speed, -100.0f, 100.0f);
 }
 
 
@@ -377,7 +360,7 @@ void window_size_callback(GLFWwindow*, int width, int height)
 {
 	glViewport(0, 0, width, height);
 	float const aspect = width / static_cast<float>(height);
-    float const fov = 50.0f * pi / 180.0f;
+    float const fov = 20.0f * pi / 180.0f;
 	float const z_min = 0.1f;
 	float const z_max = 100.0f;
     scene.projection = projection_perspective(fov, aspect, z_min, z_max);
@@ -403,7 +386,7 @@ void mouse_move_callback(GLFWwindow* window, double xpos, double ypos)
 }
 
 // Store keyboard state
-// left-right / up-down key
+// left-right / up-down / 1-2 keys for the three roatation axis
 void keyboard_callback(GLFWwindow* , int key, int , int action, int )
 {
     if(key == GLFW_KEY_UP){
