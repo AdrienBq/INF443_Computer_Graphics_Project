@@ -21,7 +21,7 @@ perlin_noise_parameters get_noise_params()
 mesh create_terrain()
 {
     // Number of samples of the terrain is N x N
-    const unsigned int N = 200;
+    const unsigned int N = 100;
 
     mesh terrain; // temporary terrain storage (CPU only)
     terrain.position.resize(N*N);
@@ -577,17 +577,17 @@ std::vector<vcl::vec3> generate_positions_ferns(vcl::mesh& terrain, perlin_noise
 std::vector<vcl::vec3> generate_positions_columns(vcl::mesh& terrain, perlin_noise_parameters const& parameters)
 {
     std::vector<vcl::vec3> tab;
-    tab.push_back({-6.0f,6.3f,parameters.terrain_height*0.7 + evaluate_dune(-6.0f,6.3f, parameters.terrain_height)});
-    tab.push_back({-5.0f,7.0f,parameters.terrain_height*0.7 + evaluate_dune(-5.0f,7.0f, parameters.terrain_height)});
-    tab.push_back({-4.0f,7.7f,parameters.terrain_height*0.7 + evaluate_dune(-4.0f,7.7f, parameters.terrain_height)});
-    tab.push_back({-3.0f,8.3f,parameters.terrain_height*0.7 + evaluate_dune(-3.0f,8.3f, parameters.terrain_height)});
-    tab.push_back({-2.0f,9.0f,parameters.terrain_height*0.7 + evaluate_dune(-2.0f,9.0f, parameters.terrain_height)});
-    tab.push_back({4.0f,10.5f,parameters.terrain_height*0.7 + evaluate_dune(4.0f,10.5f, parameters.terrain_height)});
-    tab.push_back({5.0f,10.5f,parameters.terrain_height*0.7 + evaluate_dune(5.0f,10.5f, parameters.terrain_height)});
-    tab.push_back({6.0f,10.5f,parameters.terrain_height*0.7 + evaluate_dune(6.0f,10.5f, parameters.terrain_height)});
-    tab.push_back({4.0f,9.5f,parameters.terrain_height*0.7 + evaluate_dune(4.0f,9.5f, parameters.terrain_height)});
-    tab.push_back({5.0f,9.5f,parameters.terrain_height*0.7 + evaluate_dune(5.0f,9.5f, parameters.terrain_height)});
-    tab.push_back({6.0f,9.5f,parameters.terrain_height*0.7 + evaluate_dune(6.0f,9.5f, parameters.terrain_height)});
+    tab.push_back({-6.0f,6.3f,parameters.terrain_height + evaluate_dune(-6.0f,6.3f, parameters.terrain_height)});
+    tab.push_back({-5.0f,7.0f,parameters.terrain_height + evaluate_dune(-5.0f,7.0f, parameters.terrain_height)});
+    tab.push_back({-4.0f,7.7f,parameters.terrain_height + evaluate_dune(-4.0f,7.7f, parameters.terrain_height)});
+    tab.push_back({-3.0f,8.3f,parameters.terrain_height + evaluate_dune(-3.0f,8.3f, parameters.terrain_height)});
+    tab.push_back({-2.0f,9.0f,parameters.terrain_height + evaluate_dune(-2.0f,9.0f, parameters.terrain_height)});
+    tab.push_back({4.0f,10.5f,parameters.terrain_height + evaluate_dune(4.0f,10.5f, parameters.terrain_height)});
+    tab.push_back({5.0f,10.5f,parameters.terrain_height + evaluate_dune(5.0f,10.5f, parameters.terrain_height)});
+    tab.push_back({6.0f,10.5f,parameters.terrain_height + evaluate_dune(6.0f,10.5f, parameters.terrain_height)});
+    tab.push_back({4.0f,9.5f,parameters.terrain_height + evaluate_dune(4.0f,9.5f, parameters.terrain_height)});
+    tab.push_back({5.0f,9.5f,parameters.terrain_height + evaluate_dune(5.0f,9.5f, parameters.terrain_height)});
+    tab.push_back({6.0f,9.5f,parameters.terrain_height + evaluate_dune(6.0f,9.5f, parameters.terrain_height)});
 
     return tab;
 }

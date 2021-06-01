@@ -93,7 +93,7 @@ int main(int, char* argv[])
 
 	imgui_init(window);
     glfwSetCursorPosCallback(window, mouse_move_callback);
-    glfwSetKeyCallback(window, keyboard_callback);
+    //glfwSetKeyCallback(window, keyboard_callback);
 	glfwSetWindowSizeCallback(window, window_size_callback);
 
 	std::cout << "Initialize data ..." << std::endl;
@@ -104,7 +104,8 @@ int main(int, char* argv[])
 	glEnable(GL_DEPTH_TEST);
 	while (!glfwWindowShouldClose(window))
 	{
-        scene.light = scene.camera_head.position();
+        scene.light = scene.camera.position();
+        //scene.light = scene.camera_head.position();
 		user.fps_record.update();
 
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -154,9 +155,14 @@ void initialize_data()
 	user.global_frame = mesh_drawable(mesh_primitive_frame());
     user.gui.display_frame = false;
 
+    // camera normal
+    scene.camera.distance_to_center = 2.5f;
+    scene.camera.look_at({ -0.5f,2.5f,1 }, { 0,0,0 }, { 0,0,1 });
+
+
     // camera fly_mode
-    scene.camera_head.position_camera = {0.0f, -15.0f, 2.0f};
-    scene.camera_head.manipulator_rotate_roll_pitch_yaw(-pi/2.0f,pi/2.0f,pi/2.0f);
+    /*scene.camera_head.position_camera = {0.0f, -15.0f, 2.0f};
+    scene.camera_head.manipulator_rotate_roll_pitch_yaw(-pi/2.0f,pi/2.0f,pi/2.0f);*/
 
     perlin_noise_parameters parameters = get_noise_params();
 
@@ -288,11 +294,11 @@ void display_frame()
         vcl::draw(palm_tree, scene);
     }
 
-    // ferns : remove "/*" and "*/" to draw ferns
-    /*for(int i=0; i<pos_ferns.size();i++){
+    // ferns : add "/*" and "*/" to remove ferns and gain FPS
+    for(int i=0; i<pos_ferns.size();i++){
         fern.transform.translate = pos_ferns[i];
         vcl::draw(fern, scene);
-    }*/
+    }
 
     // drifting boat
     update_boat_drift(boat_drift, t);
@@ -308,7 +314,7 @@ void display_frame()
 		bird["body"].transform.translate = pos;
 		bird.update_local_to_global_coordinates();
 		vcl::draw(bird, scene);
-		std::cout << pos[0] << " " << pos[1] << " " << pos[2] << std::endl;
+		//std::cout << pos[0] << " " << pos[1] << " " << pos[2] << std::endl;
     }
 
     // attached boat
