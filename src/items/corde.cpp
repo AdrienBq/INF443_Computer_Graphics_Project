@@ -6,12 +6,13 @@ using namespace vcl;
 
 
 int NbrSpring = 10;
-float const m  = 0.01f;        // particle mass
-float const mu = 0.1f;       // damping coefficient
-float const K = 1.0f;
+float const m  = 0.01f;     // masse des particules
+float const mu = 0.1f;      // coefficient d'amortissement
+float const K = 1.0f;       // raideur des ressors
 vcl::vec3 const g   = {0,0,-9.81f}; // gravity
 
 
+//definition de la force de rappel des ressorts
 vcl::vec3 spring_force(vcl::vec3 const& p_i, vcl::vec3 const& p_j, float L_0, float K)
 {
     float L = sqrt((p_i[0] - p_j[0])*(p_i[0] - p_j[0])
@@ -22,6 +23,8 @@ vcl::vec3 spring_force(vcl::vec3 const& p_i, vcl::vec3 const& p_j, float L_0, fl
     return f;
 }
 
+// recalcule la force appliquee a chaque ressort a chaque instant
+// met a jour les positions et empechant que la corde coule sous l'eau
 void update_pos_rope(vcl::vec3 pos_bateau, vcl::buffer<vcl::vec3>& particules, vcl::buffer<vcl::vec3>& vitesses, vcl::buffer<float>& L0_array, vcl::buffer<float>& raideurs, vcl::mesh& terrain, float t, float dt, float tmax)
 {
     // Forces
@@ -59,8 +62,11 @@ void update_pos_rope(vcl::vec3 pos_bateau, vcl::buffer<vcl::vec3>& particules, v
     }
 }
 
+// initialisation de la corde a partir de ses points d'attache (bateau et berge)
+// permet de choisir des longueurs L0 coherentes independamment de la position de depart de la barque
 void initialize_corde(vcl::vec3 pos_bateau, vcl::vec3& pos_poteau, vcl::buffer<vcl::vec3>& particules, vcl::buffer<vcl::vec3>& vitesses, vcl::buffer<float>& L0_array, vcl::buffer<float>& raideurs)
 {
+    // position initiale des particules
     particules = {};
     particules.push_back(pos_poteau);
     vitesses.push_back({0,0,0});
@@ -72,6 +78,7 @@ void initialize_corde(vcl::vec3 pos_bateau, vcl::vec3& pos_poteau, vcl::buffer<v
     particules.push_back(pos_bateau);
     vitesses.push_back({0,0,0});
 
+    // longueur a vide des ressorts
     L0_array = {};
     for(int i=0; i<NbrSpring; i++){
         L0_array.push_back(std::sqrt((pos_bateau[0]-pos_poteau[0])*(pos_bateau[0]-pos_poteau[0])
@@ -80,6 +87,7 @@ void initialize_corde(vcl::vec3 pos_bateau, vcl::vec3& pos_poteau, vcl::buffer<v
                 /(2.0f * NbrSpring));
     }
 
+    // raideurs des ressorts
     raideurs = {};
     for(int i=0; i<NbrSpring; i++){
         raideurs.push_back(K);

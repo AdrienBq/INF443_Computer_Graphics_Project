@@ -4,12 +4,15 @@
 
 using namespace vcl;
 
+
+// points et temps de controles pour l'animation de la barque qui derive
 vcl::buffer<vcl::vec3> key_positions = { {8.0f,6.0f,0.08f}, {8.0f,6.0f,0.08f}, {7.0f,5.5f,0.08f}, {2.0f,4.0f,0.08f}, {1.0f,-1.0f,0.08f},
                                          {-2.0f,-8.0f,0.08f}, {-6.0f,-10.0f,0.08f}, {-7.9f,-10.95f,0.08f}, {-8.0f,-11.0f,0.08f}, {-8.0f,-11.0f,0.08f} };
 vcl::buffer<float> key_times = { 0.0f, 2.0f, 6.0f, 12.0f, 18.0f, 26.0f, 32.0f,  34.0f,  36.0f, 38.0f };
 int idx_last_key_time_boat;
 
 
+// creation de la forme de la barque avec des courbes non triviales
 vcl::mesh create_boat(float radius, float width, float height, unsigned int N)
 {
 	mesh boat;
@@ -82,7 +85,7 @@ vcl::mesh create_boat(float radius, float width, float height, unsigned int N)
 	return boat;
 }
 
-
+// initialisation du mesh_drawable : taille, texture, position de depart
 void initialize_boat(vcl::mesh_drawable& boat, float size)
 {
 	boat = vcl::mesh_drawable(create_boat(size * 7.0f, size * 2.0f, size * 1.0f, 50));
@@ -102,19 +105,25 @@ void initialize_boat(vcl::mesh_drawable& boat, float size)
     idx_last_key_time_boat = 1;
 }
 
+
+// on recupere la position de la proue pour y attacher la corde
 vcl::vec3 get_translation_to_bow(float size)
 {
 	float R = size * 0.6 * 7.0f, width = size * 2.0f, height = size * 1.0f;
 	return { 0, R * std::sin(std::acos(1 - width / R)), height };
 }
 
-
+// update la position de la barque attachee en fonction du temps
+// animation descriptive (fonction sin(t)) couplee avec un mouvement brownien pour plus de realisme
 void update_pos_boat(vcl::mesh_drawable& boat, float t, float tmax)
 {
     boat.transform.translate = {4.0f+std::sin(20*pi*(t+ static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 0.01f))) /tmax)/10 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 0.002f)) - 0.001f,-9.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 0.002f)) - 0.001f,0.08f};
 }
 
 
+// interpolation des points de controles a l'aide d'une courbe spline cardinale
+// on determine egalement la nouvelle direction de la barque lorsqu'elle depasse un point de controle
+// afin qu'elle suive la courbe du mouvement
 void update_boat_drift(vcl::mesh_drawable& boat, float t)
 {
     // INTERPOLATION
@@ -143,6 +152,7 @@ void update_boat_drift(vcl::mesh_drawable& boat, float t)
     update_boat_direction(boat, p, theta, change);
 }
 
+// update la position et l'orientation de la barque qui derive
 void update_boat_direction(vcl::mesh_drawable &boat, vcl::vec3 position, float theta, bool change_orientation)
 {
     /** *************************************************************  **/

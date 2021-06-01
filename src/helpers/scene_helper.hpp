@@ -45,7 +45,7 @@ struct user_interaction_parameters {
 	picking_structure picking;
     bool display_frame = true;
     keyboard_state_parameters keyboard_state;
-    float speed = 2.0f;
+    float speed = 0.0f;
 };
 
 
